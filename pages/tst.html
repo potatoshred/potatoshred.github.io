@@ -4,7 +4,8 @@
 <head>
     <meta charset="utf-8">
     <title>Untitled Document</title>
-<!--	<meta http-equiv="Refresh" content="5;url=http://www.w3school.com.cn" />-->
+    <link rel="stylesheet" href="./tst.css">
+    <!--	<meta http-equiv="Refresh" content="5;url=http://www.w3school.com.cn" />-->
     <style type="text/css">
         body,
         td,
@@ -18,11 +19,74 @@
             box-align: center;
 
         }
+
+        canvas {
+            background-color: black;
+        }
+
+        input:invalid {
+            background-color: red;
+            animation: animation .5s;
+        }
+        @keyframes animation{
+            25%{
+                transform: translate(10px);
+            }
+            50%{
+                transform: translate(-10px);
+            }
+            75%{
+                transform: translate(10px);
+            }
+        }
+
+
+        button{
+            width: 64px;
+            height: 32px;
+        }
+
+        button::after{
+            display: block;
+            height: 20px;
+            width: 20px;
+            background-color: rebeccapurple;
+            content: attr(data-num);
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            line-height: 20px;
+            position: relative;
+            top: -28px;
+            right: -47px;
+        }
+        button:nth-child(2)::after{
+            background-color: green;
+            color: aquamarine;
+        }
+        .box{
+            width: 100vw;
+            height: 100vh;
+        }
     </style>
 </head>
 
 <body bgcolor="grey">
-    <!-- <img src="../img/pfp.jpg">图片</img> -->
+    <div class="box">
+        <div class="balls" id="balls">
+
+        </div>
+    </div>
+    <script src="./tst.js"></script>
+    <br><br>
+    <input type="text" placeholder="数字" pattern="[0-9]*">
+    <br><br>
+    <button data-num="5">按钮</button>
+    <br><br>
+    <button data-num="6">按钮</button>
+
+    <!-- <img src="../img/pfp.jpg">图片</img>
+
     <table width="400" border="1">
         <tr>
             <th align="left">消费项目....</th>
@@ -54,7 +118,7 @@
 	<textarea placeholder="advsfg" ></textarea>
     <br />
     <br />
-    <img src="../img/pfp.jpg"
+    <img src="../img/pfp.jpg" -->
 
 </body>
 

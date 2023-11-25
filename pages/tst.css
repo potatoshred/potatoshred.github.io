@@ -1,0 +1,34 @@
+body{
+    margin:0;
+  }
+  body,input{
+    background-color:#111;
+    color:#3D3;
+    font-family:Consolas;
+    letter-spacing:2px;
+    font-size:20px;
+  }
+  input[type=text] {
+    background:0;
+    border:0px;
+    border-color: #3D3;
+    border-block-color: black;
+    border-inline-color: black;
+    padding-left:9px;
+  }
+  label {
+    position:absolute;
+    top:0;
+    right:0;
+    bottom:0;
+    left:0;
+  }
+  .line{
+    border:0;
+  }
+  .console {
+    padding:12px;
+  }
+  #pages {
+    display:none;
+  }
