@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>华科，启动！</title>
+    <style type="text/css">
+        body{
+            animation: start 1s;
+            /* background-repeat: no-repeat; */
+            background-size: 100dvw 100dvh;
+            
+        }
+        @keyframes start{
+            0%{
+                background-size: 1000dvw 1000dvh;
+            }
+            100%{
+                background-size: 100dvw 100dvh;
+
+            }
+        }
+    </style>
+</head>
+
+<body bgcolor="grey" background="../img/hustgi.jpg">
+    <audio autoplay>
+        <source src="../audio/start.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+</body>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var audio = new Audio('../audio/start.mp3');
+        audio.play();
+    });
+</script>
+
+</html>

@@ -45,7 +45,7 @@ window.onload = function () {
         // Command is in indexes list.
         if (typeof indexes[s] != 'undefined') {
             printLines(pages[indexes[s]], '#33B');
-            window.open("../img/hustgi.jpg");
+            window.open("./start.html");
         }
         // Unknown Command.
         else {
