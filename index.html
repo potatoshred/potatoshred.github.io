@@ -1,57 +1,134 @@
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<link rel="icon" href="favicon.ico"  type ="image/x-icon">
-<title>欢迎来到我的主页</title>
-<style type="text/css">
-	
-	body {
-		background-color: rgb(4, 189, 192)
-		/* background-image: url("img/wallpaper.png"); */
-		/* background-size: cover; */
-	}
-	td,th {
-		color: #000000;
-	}
+<!DOCTYPE html>
+<html lang="zh">
 
-	.divcenter{
-		text-align: center;
-	}
-	div.footer{
-		background-color: #211B1B;
-		color: aliceblue;
-		text-align: center
-	}
-	footer{
-		width: 100%;
-		height: 150px;
-		position: absolute;
-		z-index: 1;
-		background-color: #262020;
-	}
-</style>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>js和CSS3超酷3D立体卡片|DEMO_jQuery之家-自由分享jQuery、html5、css3的插件库</title>
+    <link rel="stylesheet" href="./css/main.css">
+    <link rel="stylesheet" href="./css/demo.css">
 </head>
 
-<body>
-	
-	<h1 style="color: white;text-align: center; text-shadow: 2px 2px 2px black" >
-	<font color="#FFFFFF" face="Verdana" size="156" >👋 Welcome To My Page!</font>
-	</h1>
-	
-	<br><br><br>
-	<h2 style="color: grey;text-align: center; text-shadow: 2px 2px 2px black">
-	<font color="#FFFFFF" face="Verdana" size="88" >A Forever Friend<br>
-"A friend walk in when the rest of the world walks out."<br>
-"别人都走开的时候，朋友仍与你在一起。” <br>Sometimes in life,<br>
-有时候在生活中， <br>You find a special friend;!</font>
-	</h2>
-	
-	
-	<footer>
-		<p align="center" style="background: #262020;font-size: 158" ><a href="pages/contact.html"><font face="黑体" size="88" color="#026E9D" >合作</font></a></p>
-	</footer>
+<body class="dark">
+    <!-- <header class="centered" style="text-align: center;">
+        <br><br><font style="text-align: center;size: 64rem;">沁苑六二四</font>
+        <h1 class="title"  style="text-align: center;">沁苑六二四</h1>
+        <ul class="link__content">
 
-	
+            <li class="content__item">
+                <a href="http://www.htmleaf.com/css3/css3donghua/202310096089.html" class="link link--iocaste">
+                    <span>返回班级主页</span>
+                    <svg class="link__graphic link__graphic--slide" width="300%" height="100%" viewBox="0 0 1200 60" preserveAspectRatio="none">
+                        <path d="M0,56.5c0,0,298.666,0,399.333,0C448.336,56.5,513.994,46,597,46c77.327,0,135,10.5,200.999,10.5c95.996,0,402.001,0,402.001,0"></path>
+                    </svg>
+                </a>
+            </li>
+        </ul>
+    </header> -->
+
+    <div class="container">
+        <br><br>    
+        <br><br>    
+        <div class="centered">
+            <div class="card border-left-behind">
+                <div class="shadow" style="--url: url('../images/full.png')"></div>
+                <div class="image background" style="--url: url('../images/Background.png')"></div>
+                <div class="image cutout" style="--url: url('../images/cutout.png')"></div>
+                <div class="content">
+                    <h2 class="title">Hover me!</h2>
+                    <p class="desc">Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
+                </div>
+            </div>
+            <!-- <div class="card border-right-behind border-bottom-behind">
+                <div class="shadow" style="--url: url('../images/m-full.png')"></div>
+                <div class="image background" style="--url: url('../images/m-background.png')"></div>
+                <div class="image cutout" style="--url: url('../images/m-cutout.png')"></div>
+                <div class="content">
+                    <h2 class="title">Hover me!</h2>
+                    <p class="desc">Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
+                </div>
+            </div> -->
+            <div class="card border-left-behind">
+                <div class="shadow" style="--url: url('../images/b-full.png')"></div>
+                <div class="image background" style="--url: url('../images/b-background.png')"></div>
+                <div class="image cutout" style="--url: url('../images/b-cutout.png')"></div>
+                <div class="content">
+                    <h2 class="title">Hover me!</h2>
+                    <p class="desc">Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
+                </div>
+            </div>
+            <div class="card border-left-behind">
+                <div class="shadow" style="--url: url('../images/full.png')"></div>
+                <div class="image background" style="--url: url('../images/Background.png')"></div>
+                <div class="image cutout" style="--url: url('../images/cutout.png')"></div>
+                <div class="content">
+                    <h2 class="title">Hover me!</h2>
+                    <p class="desc">Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
+                </div>
+            </div>
+            <div class="card border-left-behind">
+                <div class="shadow" style="--url: url('../images/b-full.png')"></div>
+                <div class="image background" style="--url: url('../images/b-background.png')"></div>
+                <div class="image cutout" style="--url: url('../images/b-cutout.png')"></div>
+                <div class="content">
+                    <h2 class="title">Hover me!</h2>
+                    <p class="desc">Lorem, ipsum dolor sit amet consectetur adipisicing elit.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <script>
+            const angle = 20;
+            const rotateCard = window;
+
+            const lerp = (start, end, amount) => {
+                return (1 - amount) * start + amount * end;
+            };
+
+            const remap = (value, oldMax, newMax) => {
+                const newValue = (value + oldMax) * (newMax * 2) / (oldMax * 2) - newMax;
+                return Math.min(Math.max(newValue, -newMax), newMax);
+            };
+
+            window.addEventListener("DOMContentLoaded", event => {
+                const cards = document.querySelectorAll(".card");
+                cards.forEach(e => {
+                    e.addEventListener("mousemove", event => {
+                        const rect = e.getBoundingClientRect();
+                        const centerX = (rect.left + rect.right) / 2;
+                        const centerY = (rect.top + rect.bottom) / 2;
+                        const posX = event.pageX - centerX;
+                        const posY = event.pageY - centerY;
+                        const x = remap(posX, rect.width / 2, angle);
+                        const y = remap(posY, rect.height / 2, angle);
+                        e.dataset.rotateX = x;
+                        e.dataset.rotateY = -y;
+                    });
+
+                    e.addEventListener("mouseout", event => {
+                        e.dataset.rotateX = 0;
+                        e.dataset.rotateY = 0;
+                    });
+                });
+
+                const update = () => {
+                    cards.forEach(e => {
+                        let currentX = parseFloat(e.style.getPropertyValue('--rotateY').slice(0, -1));
+                        let currentY = parseFloat(e.style.getPropertyValue('--rotateX').slice(0, -1));
+                        if (isNaN(currentX)) currentX = 0;
+                        if (isNaN(currentY)) currentY = 0;
+                        const x = lerp(currentX, e.dataset.rotateX, 0.05);
+                        const y = lerp(currentY, e.dataset.rotateY, 0.05);
+                        e.style.setProperty("--rotateY", x + "deg");
+                        e.style.setProperty("--rotateX", y + "deg");
+                    });
+                };
+                setInterval(update, 1000 / 60);
+            });
+
+        </script>
 </body>
+
 </html>
