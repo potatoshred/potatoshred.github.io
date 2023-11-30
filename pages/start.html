@@ -12,6 +12,13 @@
 
         }
 
+        h1{
+            /* font-size: 0rem; */
+            position: relative;
+            top: 90vh;
+            animation: appear 10s ease;
+        }
+
         @keyframes start {
             0% {
                 background-size: 1000dvw 1000dvh;
@@ -22,10 +29,21 @@
 
             }
         }
+        @keyframes appear {
+            0% {
+                font-size: 0rem;
+            }
+
+            100% {
+                font-size: 2rem;
+
+            }
+        }
     </style>
 </head>
 
 <body bgcolor="grey" background="../img/hustgi.jpg">
+    <h1 class="return"><a href="./index.html" style="text-decoration:none"><font style="color: grey;">返回</font></a></h1>
     <audio id="myAudio" src="../audio/start.mp3" preload="auto" autoplay></audio>
 </body>
 
@@ -33,6 +51,7 @@
     document.addEventListener('click', function () {
         var audio = document.getElementById('myAudio');
         audio.play();
+        
     });
 </script>
 

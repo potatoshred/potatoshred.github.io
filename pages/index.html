@@ -1,57 +1,54 @@
 <!doctype html>
 <html>
-<head>
-<meta charset="utf-8">
-<link rel="icon" href="favicon.ico"  type ="image/x-icon">
-<title>欢迎来到我的主页</title>
-<style type="text/css">
-	
-	body {
-		background-color: rgb(4, 189, 192)
-		/* background-image: url("img/wallpaper.png"); */
-		/* background-size: cover; */
-	}
-	td,th {
-		color: #000000;
-	}
 
-	.divcenter{
-		text-align: center;
-	}
-	div.footer{
-		background-color: #211B1B;
-		color: aliceblue;
-		text-align: center
-	}
-	footer{
-		width: 100%;
-		height: 150px;
-		position: absolute;
-		z-index: 1;
-		background-color: #262020;
-	}
-</style>
+<head>
+    <meta charset="utf-8">
+    <title>Command Prompt</title>
+    <link href="../css/cmd.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Inconsolata:400,700|VT323" rel="stylesheet">
+    <script>document.documentElement.className = 'js';</script>
+
 </head>
 
-<body>
-	
-	<h1 style="color: white;text-align: center; text-shadow: 2px 2px 2px black" >
-	<font color="#FFFFFF" face="Verdana" size="156" >👋 Welcome To My Page!</font>
-	</h1>
-	
-	<br><br><br>
-	<h2 style="color: grey;text-align: center; text-shadow: 2px 2px 2px black">
-	<font color="#FFFFFF" face="Verdana" size="88" >A Forever Friend<br>
-"A friend walk in when the rest of the world walks out."<br>
-"别人都走开的时候，朋友仍与你在一起。” <br>Sometimes in life,<br>
-有时候在生活中， <br>You find a special friend;!</font>
-	</h2>
-	
-	
-	<footer>
-		<p align="center" style="background: #262020;font-size: 158" ><a href="pages/contact.html"><font face="黑体" size="88" color="#026E9D" >合作</font></a></p>
-	</footer>
+<body class="demo-11">
 
-	
+    <div id="connecting-dots" class="connecting-dots">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="search search--open">
+
+        <div class="terminal">
+            <p class="terminal__line">Welcome:<span class="green">GUEST_A4B20977
+                </span><span style="color: white;">></span></p>
+            <p class="terminal__line">How's the weather today<span style="color: white;">?</span></p>
+            <p class="terminal__line">Panel interface completed.</p>
+            <p class="terminal__line">Navigation portals fetched:</p>
+            <p class="terminal__line"><a href="./aboutme.html" target="_blank">#about</a></p>
+            <p class="terminal__line"><a href="./blog.html" target="_blank">#blog</a></p>
+            <p class="terminal__line"><a href="./contact.html" target="_blank">#contact</a></p>
+            <p class="terminal__line"><a href="./start.html" target="_blank">#start</a></p>
+            <p class="terminal__line"><a href="../index.html" target="_blank">#back</a></p>
+            <p class="terminal__line"><a href="#"></a>.</p>
+            <p class="terminal__line"><a href="#"></a>.</p>
+            <p class="terminal__line">Inject <a href="#">Help.md</a> to C:\Users\<span class="console"></span></p>
+            <p class="terminal__line">\\<span class="console"></span>\<a href="#">C:\Users\Public\Help.md</a> > In
+                order to navigate click on the links above or type the section you would like to access e.g: "about"
+            </p>
+        </div>
+        <form class="search__form" action="">
+            <input class="search__input" id="search__input" name="search" placeholder="Command Line" autocomplete="off"
+                autocorrect="off" autocapitalize="off" spellcheck="false"></input>
+        </form>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/easing/EasePack.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TweenLite.min.js"></script>
+    <script src="../scripts/cmd.js"></script>
+
 </body>
+
+
+
 </html>
