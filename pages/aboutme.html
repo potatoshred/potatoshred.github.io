@@ -1,0 +1,268 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>关于我</title>
+    <style type="text/css">
+        #AboutArticle {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            min-width: 800px;
+            max-width: 800px;
+            background-color: var(--Surface);
+            z-index: 1;
+            padding: 20px;
+            margin: 20px 0px;
+            border-radius: 5px;
+        }
+
+        #AboutArticle:hover>#About img {
+            left: 600px;
+            transition: all .6s ease;
+        }
+
+        #AboutArticle:hover>#About #AboutMe {
+            width: 0;
+            transition: all .6s ease;
+        }
+
+        #AboutArticle:hover>#About #AboutInfo {
+            width: 555px;
+            transition: all .6s ease;
+        }
+
+        #About {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            left: 0;
+        }
+
+        #About img {
+            position: absolute;
+            left: 0;
+            border-radius: 5px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 1);
+            transition: all .6s ease;
+            width: 200px;
+            height: 300px;
+        }
+
+        #AboutMe h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        #AboutMe h1::first-letter {
+            font-size: 25px;
+        }
+
+        #AboutMe {
+            overflow: hidden;
+            position: absolute;
+            width: 590px;
+            min-height: 300px;
+            max-height: 300px;
+            right: 0;
+            transition: all .6s ease;
+        }
+
+        #AboutMe div {
+            position: absolute;
+            overflow: hidden;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            text-align: justify;
+            min-width: 550px;
+            max-width: 550px;
+            min-height: 100%;
+            max-height: 100%;
+        }
+
+        #AboutInfoText span h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        #AboutInfoText span h1::first-letter {
+            font-size: 25px;
+        }
+
+        #AboutInfoText span h3 {
+            letter-spacing: 0.5px;
+            font-size: 15px;
+            text-transform: uppercase;
+        }
+
+        #AboutInfoText span h3::first-letter {
+            font-size: 20px;
+        }
+
+        #AboutInfo {
+            position: relative;
+            text-align: center;
+            overflow: hidden;
+            width: 0;
+            min-height: 300px;
+            max-height: 300px;
+            padding: 0;
+            margin: 0;
+            right: 0;
+            transition: all .6s ease;
+        }
+
+        #AboutInfo #AboutInfoText span>* {
+            display: inline-block;
+            text-decoration: none;
+            color: var(--OnBackground);
+            padding: 0;
+            margin: 0;
+        }
+
+        #AboutInfo #AboutInfoText {
+            position: absolute;
+            overflow: hidden;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            column-gap: 0px;
+            row-gap: 0px;
+            min-width: 555px;
+            max-width: 555px;
+            min-height: 300px;
+            max-height: 300px;
+        }
+
+        #InfoIcons .LinkIcons {
+            color: var(--Secondary) !important;
+            text-shadow: 0 -2px 10px rgba(0, 0, 0, 1);
+        }
+
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap");
+
+        :root {
+            --Background: #121212;
+            --Surface: #222222;
+            --Primary: #ff7597; 
+            --Secondary: #02ffee;
+            --OnColor: #121212;
+            --OnBackground: #fff;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--Background);
+            padding: 0;
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            color: #f0ffff;
+            height: 100vh;
+            width: 100%;
+        }
+
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 70%;
+            background-color: var(--Surface);
+            border-radius: 5px;
+            padding: 20px;
+            margin: 10px 0px;
+        }
+
+        p {
+            text-align: justify;
+        }
+    </style>
+</head>
+
+<body bgcolor="#120000">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.9.1/font/bootstrap-icons.min.css"
+        integrity="sha512-5PV92qsds/16vyYIJo3T/As4m2d8b6oWYfoqV+vtizRB6KhF1F9kYzWzQmsO6T3z3QG2Xdhrx7FQ+5R1LiQdUA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <article id="AboutArticle" class="Article">
+        <div id="About">
+            <div id="AboutInfo">
+                <div id="AboutInfoText">
+                    <span>
+                        <h1>彭&nbsp;</h1>
+                        <h1>冲</h1>
+                    </span>
+                    <span>
+                        <h3 style="color: var(--Secondary);">Freshman</h3>
+                    </span>
+                    <br>
+                    <span>
+                        <h3>Age:&nbsp;</h3>
+                        <p>23</p>
+                    </span>
+                    <span>
+                        <h3>Mail:&nbsp;</h3><a
+                            href="mailto:ruslan2kiev@gmail.com?Subject=Vivo50">ruslan2kiev@gmail.com</a>
+                    </span>
+                    <span>
+                        <h3>Phone:&nbsp;</h3>
+                        <p>(+86) 14159265358</p>
+                    </span>
+                    <span>
+                        <h3>City:&nbsp;</h3>
+                        <p>安徽, 宿州.</p>
+                    </span>
+                    <span id="InfoIcons">
+                        <h3>Social media: </h3><br>
+                        <a href="https://space.bilibili.com/224541826" class="LinkIcons" target="_blank"><i class="bi bi-play"></i></a>
+                        <a href="https://github.com/potatoshred" class="LinkIcons" target="_blank"><i class="bi bi-github"></i></a>
+                    </span>
+                    <br><br>
+                    <span id="InfoIcons">
+                        <a href="./cmd.html" class="LinkIcons" target="_self">返回<i class="bi bi-backarrow"></i></a>
+                    </span>
+                </div>
+
+            </div>
+
+            <img src="https://picsum.photos/200/300?grayscale">
+
+            <div id="AboutMe">
+                <div>
+                    <h1>你好！</h1>
+                    <p>鼠标移到这里看看~</p>
+                </div>
+            </div>
+
+        </div>
+
+    </article>
+
+</body>
+
+</html>
