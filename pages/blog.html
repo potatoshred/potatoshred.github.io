@@ -27,99 +27,139 @@
         * {
             font-family: 华文中宋;
         }
+
+        .link {
+            cursor: pointer;
+            font-size: 18px;
+            position: relative;
+            white-space: nowrap;
+            color: var(--color-link);
+            text-decoration: none;
+        }
+
+        .link::before,
+        .link::after {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: currentColor;
+            top: 100%;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .link::before {
+            content: '';
+        }
+
+        .link--iocaste {
+            font-family: lust-fine, sans-serif;
+            overflow: hidden;
+            padding: 7px 0;
+        }
     </style>
 </head>
 
 <body bgcolor="black">
 
+    <div class="image" style="color: white;text-align: center; text-shadow: 2px 2px 2px black">
+        <header style="text-align: left;">
+            <ul class="link__content">
+                <li>
+                    <a href="./index.html" class="link link--iocaste">
+                        <span>返回主页</span>
+                    </a>
+                </li>
+
+            </ul>
+        </header>
+        <div><br><br><br>
+            <p>
+                <font size="128" text-shadow: 2px 2px 2px black;>最近看的东西~</font>
+            </p>
+        </div><br><br>
+        <br><br>
+        <table style="padding: 100px;line-height: 64px;">
+            <tr>
+                <td>
+                    <font size="128">沧元图</font><br>
+                    <a href="https://v.youku.com/v_show/id_XNjE0NzU4NTg1Ng==.html"><img src="../img/沧元图.png"
+                            width="64%"></a>
+                    <br><br>
+
+                </td>
+                <td>
+                    <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86
+                        src="//music.163.com/outchain/player?type=2&id=2054517809&auto=1&height=66"
+                        autoplay="true"></iframe>
+                    <h2>沧元界妖邪作乱，人族饱受摧残，主角孟川自小立下为母复仇的誓言，以镜湖道院为起点，凭借坚毅无畏的心志与利落果决的刀法身手，惩处奸恶，溃灭妖族，登顶四大道院，名满东宁府，拜上元初山，成就一代神魔。
+                    </h2>
+                    <br>
+                    <h3 style="color:aqua;">特效很好看~有风格，有个性！不过变身造型有点让人出戏<br>(点图片可以跳转官方网站哦~)</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h2>魔法使芙莉莲和勇者辛美尔等人一起，历经十年的冒险之后击败了魔王，为世界带来了和平。
+                        <br><br>自那以后，50年过去，芙莉莲又前往拜访辛美尔，相比于和50年前一点没变的她来说，辛美尔已经年迈体衰，进入了风烛残年。
+                        之后，她目睹了辛美尔迎来他的死亡，痛感自己以往没能“知晓人心"，陷入后悔的芙莉莲，为了“知晓人心"，踏上了旅途。
+                        这趟旅途会邂逅各种各样的人，也有各种各样的事情在等待着她。
+                    </h2>
+                    <h3 style="color:aqua;">冒险的感觉很好，还有长生种与短生种的各种扭曲，跟修仙小说讨论的方向不一样</h3>
+                </td>
+                <td>
+                    <a href="https://frieren-anime.jp/"><img src="../img/furiiren.png" height="8%">
+                        <br>
+                        <img src="../img/furirian.jpg" width="64%">
+                        <br></a>
+                    <font size="128">葬送的芙莉莲</font><br><br><br>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <font size="128">16bit的感动 ANOTHER LAYER</font>
+                    <a href="https://16bitsensation-al.com/"><img src="../img/16bitlogo.png" width="12%">
+                        <br>
+                        <img src="../img/16bit.jpg" width="64%"></a>
+
+                </td>
+                <td>
+                    <h2>
+                        <br>&nbsp;&nbsp;&nbsp;&nbsp;木叶作为一个底层画师，每天的工作就是给路人角色的背影上色。
+                        某天，她偶然从游戏商店的老板那里获赠了过去的美少女游戏名作。
+                        怀着对美少女游戏黄金时代的怀念之情，她打开了『同级生』的盒子。
+                        突然她被耀眼的光芒包裹，等她回过神来，木叶发现她穿越到了过去！<br>『那么，开始咯！』
+                    </h2>
+                    <h3 style="color:aqua;">看老东西讲故事~那个充满可能性的时代……</h3>
+                </td>
+            </tr>
+
+
+
+            <tr>
+                <td>
+                    <h2>你是为了什么而玩游戏的？
+                        <br>如果世上有100部神作，那么也存在着1000部粪作。这是喜爱粪作，同时也被粪作所爱的男人“阳务乐郎”，向粪作的对立面——神作「香格里拉边境」发起挑战的故事。
+                        <br>本作品通过每个人都能拥有的游戏体验来描绘出一种新的幻想世界，为沉浸在过去记忆中的大人和生活在科技最前沿的年轻人都带来了新的冒险与刺激。
+                        一名“粪作猎人”向神作发起挑战，至高无上的"游戏x幻想 "的冒险故事，开幕！！
+                    </h2>
+                    <h3 style="color:aqua;">看别人玩游戏~不同的人玩游戏的理念不同，有的人看剧情，有的人重画面，有的人玩的是社交，有的人是来挑战……</h3>
+                </td>
+                <td>
+                    <br><a href="https://anime.shangrilafrontier.com/"><img src="../img/shangriralogo.webp" width="20%">
+                        <br>
+                        <img src="../img/shangrira.webp" width="64%"></a>
+                    <br>
+                    <font size="128">香格里拉·弗陇提亚</font><br><br><br>
+                </td>
+            </tr>
+        </table><br><br><br><br>
+
+
+
+
+    </div>
 </body>
-<div class="image" style="color: white;text-align: center; text-shadow: 2px 2px 2px black">
-    <!-- <h1 style="color: white;text-align: center; text-shadow: 2px 2px 2px black" > -->
-    <div><br><br><br>
-    <p >
-        <font size="128" text-shadow: 2px 2px 2px black;>最近看的东西~</font>
-    </p>
-    </div><br><br>
-    <br><br>
-    <table style="padding: 100px;line-height: 64px;">
-        <tr>
-            <td>
-                <font size="128">沧元图</font><br>
-                <a href="https://v.youku.com/v_show/id_XNjE0NzU4NTg1Ng==.html"><img src="../img/沧元图.png"
-                        width="64%"></a>
-                <br><br>
-
-            </td>
-            <td>
-                <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86
-                    src="//music.163.com/outchain/player?type=2&id=2054517809&auto=1&height=66" autoplay="true"></iframe>
-                <h2>沧元界妖邪作乱，人族饱受摧残，主角孟川自小立下为母复仇的誓言，以镜湖道院为起点，凭借坚毅无畏的心志与利落果决的刀法身手，惩处奸恶，溃灭妖族，登顶四大道院，名满东宁府，拜上元初山，成就一代神魔。
-                </h2>
-                <br>
-                <h3 style="color:aqua;">特效很好看~</h3>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <h2>魔法使芙莉莲和勇者辛美尔等人一起，历经十年的冒险之后击败了魔王，为世界带来了和平。
-                    <br><br>自那以后，50年过去，芙莉莲又前往拜访辛美尔，相比于和50年前一点没变的她来说，辛美尔已经年迈体衰，进入了风烛残年。
-                    之后，她目睹了辛美尔迎来他的死亡，痛感自己以往没能“知晓人心"，陷入后悔的芙莉莲，为了“知晓人心"，踏上了旅途。
-                    这趟旅途会邂逅各种各样的人，也有各种各样的事情在等待着她。
-                </h2>
-                <h3 style="color:aqua;">大冒险~</h3>
-            </td>
-            <td>
-                <a href="https://frieren-anime.jp/"><img src="../img/furiiren.png" height="8%">
-                    <br>
-                    <img src="../img/furirian.jpg" width="64%">
-                    <br></a>
-                <font size="128">葬送的芙莉莲</font><br><br><br>
-            </td>
-        </tr>
-
-        <tr>
-            <td>
-                <font size="128">16bit的感动 ANOTHER LAYER</font>
-                <a href="https://16bitsensation-al.com/"><img src="../img/16bitlogo.png" width="12%">
-                    <br>
-                    <img src="../img/16bit.jpg" width="64%"></a>
-
-            </td>
-            <td>
-                <h2>
-                    <br>&nbsp;&nbsp;&nbsp;&nbsp;木叶作为一个底层画师，每天的工作就是给路人角色的背影上色。
-                    某天，她偶然从游戏商店的老板那里获赠了过去的美少女游戏名作。
-                    怀着对美少女游戏黄金时代的怀念之情，她打开了『同级生』的盒子。
-                    突然她被耀眼的光芒包裹，等她回过神来，木叶发现她穿越到了过去！<br>『那么，开始咯！』
-                </h2>
-                <h3 style="color:aqua;">看老东西讲故事~</h3>
-            </td>
-        </tr>
-
-
-
-        <tr>
-            <td>
-                <h2>你是为了什么而玩游戏的？
-                    <br>如果世上有100部神作，那么也存在着1000部粪作。这是喜爱粪作，同时也被粪作所爱的男人“阳务乐郎”，向粪作的对立面——神作「香格里拉边境」发起挑战的故事。
-                    <br>本作品通过每个人都能拥有的游戏体验来描绘出一种新的幻想世界，为沉浸在过去记忆中的大人和生活在科技最前沿的年轻人都带来了新的冒险与刺激。
-                    一名“粪作猎人”向神作发起挑战，至高无上的"游戏x幻想 "的冒险故事，开幕！！
-                </h2>
-                <h3 style="color:aqua;">看别人玩游戏~</h3>
-            </td>
-            <td>
-                <br><a href="https://anime.shangrilafrontier.com/"><img src="../img/shangriralogo.webp" width="20%">
-                    <br>
-                    <img src="../img/shangrira.webp" width="64%"></a>
-                <br>
-                <font size="128">香格里拉·弗陇提亚</font><br><br><br>
-            </td>
-        </tr>
-    </table><br><br><br><br>
-
-
-
-
-</div>
 
 </html>
