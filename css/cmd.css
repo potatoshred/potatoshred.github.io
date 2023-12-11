@@ -5,7 +5,8 @@
 }
 
 body {
-    font-family: 'Courier New', Courier, monospace;
+    /* font-family: 'Courier New', Courier, monospace; */
+    font-family: 楷体;
     overflow: hidden;
     margin: 0;
     color: #a0a2ae;
@@ -185,6 +186,7 @@ span.green {
 }
 
 .terminal__line {
+    font-family: 楷体;
     line-height: 1.25;
     overflow: hidden;
     width: 0;
@@ -330,11 +332,11 @@ span.green {
 }
 
 .js .search--open .terminal__line:nth-child(2) {
-    animation-delay: 2s;
+    animation-delay: .5s;
 }
 
 .js .search--open .terminal__line:nth-child(3) {
-    animation-delay: 3.35s;
+    animation-delay: 1.35s;
 }
 
 .js .search--open .terminal__line:nth-child(2),
@@ -346,7 +348,7 @@ span.green {
 .js .search--open .terminal__line:nth-child(4) {
     animation-duration: 1.4s, 0.1s;
     animation-timing-function: steps(28, end), ease;
-    animation-delay: 5.35s;
+    animation-delay: 2.35s;
 }
 
 .js .search--open .terminal__line:nth-child(5) ,
@@ -356,31 +358,31 @@ span.green {
 .js .search--open .terminal__line:nth-child(9) {
     animation-duration: 0.5s, 0.1s;
     animation-timing-function: steps(10, end), ease;
-    animation-delay: 8s;
+    animation-delay: 4s;
 }
 
 .js .search--open .terminal__line:nth-child(10) {
     animation-duration: 0.65s, 0.1s;
     animation-timing-function: steps(13, end), ease;
-    animation-delay: 9.05s;
+    animation-delay: 5.05s;
 }
 
 .js .search--open .terminal__line:nth-child(11) {
     animation-duration: 0.6s, 0.1s;
     animation-timing-function: steps(12, end), ease;
-    animation-delay: 10.7s;
+    animation-delay: 5.7s;
 }
 
 .js .search--open .terminal__line:nth-child(12) {
     animation-duration: 0.6s, 0.1s;
     animation-timing-function: steps(12, end), ease;
-    animation-delay: 11.2s;
+    animation-delay: 6.2s;
 }
 
 .js .search--open .terminal__line:nth-child(13) {
     animation-duration: 3s, 0.1s;
     animation-timing-function: steps(190, end), ease;
-    animation-delay: 12s;
+    animation-delay: 7s;
 }
 
 .connecting-dots {
