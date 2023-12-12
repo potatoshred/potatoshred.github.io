@@ -6,10 +6,10 @@ window.onload = function () {
     // Turn HTML into lines for printing.
     processPages();
     // Print initial help page.
-    printLines(pages[0]);
+    // printLines(pages[0]);
     // Focus on input.
     // Disabled for embedded use
-    // input.focus();
+    input.focus();
 
     document.body.onkeypress = function (e) {
         // Not enter
@@ -25,27 +25,18 @@ window.onload = function () {
         input.value = '';
     }
     function enterCommand(s) {
-        // Indexes relate to their position in the HTML.
-        var indexes = {
-            help: 0,
-            about: 1,
-            bio: 2,
-            contact: 3,
-            blog: 4,
-            return:5,
-            start:6
-        };
-        // if (s=="start"){
-        //     window.open("../img/hustgi.jpg");
-        // }else if (s=="return"){
-        //     window.open("../img/hustgi.jpg");
-        // }else if (s=="about"){
-        //     window.open("../img/hustgi.jpg");
-        // }
-        // Command is in indexes list.
-        if (typeof indexes[s] != 'undefined') {
-            printLines(pages[indexes[s]], '#33B');
+        if (s=="blog"){
+            window.open("./blog.html");
+        }else if (s=="back"){
+            window.open("../index.html");
+        }else if (s=="about"){
+            window.open("./aboutme.html");
+        }else if (s=="start"){
             window.open("./start.html");
+        }else if (s=="contact"){
+            window.open("./contact.html");
+        }else if (s=="help"){
+            printLine('直接点击上面的条目，或者手动输入', '#D33');
         }
         // Unknown Command.
         else {
@@ -56,7 +47,6 @@ window.onload = function () {
         for (var i = 0; i < lines.length; i++) {
             printLine(lines[i], color);
         }
-        window.scrollTo(0, document.body.scrollHeight);
     }
     function printLine(s, color) {
         if (typeof color == 'undefined') {
