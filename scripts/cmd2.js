@@ -35,6 +35,8 @@ window.onload = function () {
             window.open("./start.html");
         }else if (s=="contact"){
             window.open("./contact.html");
+        }else if (s=="past"){
+            window.open("./slide.html");
         }else if (s=="help"){
             printLine('直接点击上面的条目，或者手动输入', '#D33');
         }
