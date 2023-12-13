@@ -30,13 +30,13 @@ window.onload = function () {
         }else if (s=="back"){
             window.open("../index.html");
         }else if (s=="about"){
-            window.open("./aboutme.html");
+            window.open("./about.html");
         }else if (s=="start"){
             window.open("./start.html");
         }else if (s=="contact"){
-            window.open("./contact.html");
-        }else if (s=="past"){
-            window.open("./slide.html");
+            window.open("./contacme.html");
+        }else if (s=="playgound"){
+            window.open("./test.html");
         }else if (s=="help"){
             printLine('直接点击上面的条目，或者手动输入', '#D33');
         }
