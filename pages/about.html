@@ -7,16 +7,30 @@
     <style type="text/css">
         body {
             background: #000000;
-            padding: 40px;
+            /* padding: 40px; */
             font-family: 华文中宋;
         }
-
+        nav {
+            overflow: hidden;
+            background-color: #333;
+            position: fixed;
+            width: 100%;
+            top: 0;
+        }
+        nav li a:hover {
+            font-weight: bold;
+        }
+        li{
+			list-style-type: none;
+		}
         div {
             word-break: break-all;
         }
-        h3{
+
+        h3 {
             font-size: 2vw;
         }
+
         img {
             max-width: 100%;
         }
@@ -28,6 +42,7 @@
             -o-transition: all 150ms ease;
             transition: all 150ms ease;
         }
+
         .container-fluid {
             background: #fbf4e0;
             margin: 40px auto 10px;
@@ -49,6 +64,7 @@
             line-height: 0.88rem;
             color: #a83b3b;
         }
+
         .caption {
             height: 140px;
             width: 100%;
@@ -146,22 +162,24 @@
             overflow: hidden;
             padding: 7px 0;
         }
+        
+
+
     </style>
 
 </head>
 
 
 <body>
-    <header style="text-align: left;">
-        <ul class="link__content">
-            <li>
+    <nav>
+        <ul>
+            <li class="link__content">
                 <a href="./index.html" class="link link--iocaste">
-                    <span>返回主页</span>
+                    Home
                 </a>
             </li>
-
         </ul>
-    </header>
+    </nav>
     <div class="container-fluid">
         <div class="row-fluid">
             <div class="span12">
@@ -317,6 +335,10 @@
 
             </div>
         </div>
+    </div>
+    <div style="text-align: center;">
+        <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86
+            src="//music.163.com/outchain/player?type=2&id=28191062&auto=1&height=66"></iframe>
     </div>
     <footer style="text-align: left;">
         <ul class="link__content">

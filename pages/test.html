@@ -7,34 +7,35 @@
 
 	<style type="text/css">
 		.link {
-            cursor: pointer;
-            font-size: 18px;
-            position: relative;
-            white-space: nowrap;
-            color: var(--color-link);
-            text-decoration: none;
-        }
+			cursor: pointer;
+			font-size: 18px;
+			position: relative;
+			white-space: nowrap;
+			color: var(--color-link);
+			text-decoration: none;
+		}
 
-        .link::before,
-        .link::after {
-            position: absolute;
-            width: 100%;
-            height: 1px;
-            background: currentColor;
-            top: 100%;
-            left: 0;
-            pointer-events: none;
-        }
+		.link::before,
+		.link::after {
+			position: absolute;
+			width: 100%;
+			height: 1px;
+			background: currentColor;
+			top: 100%;
+			left: 0;
+			pointer-events: none;
+		}
 
-        .link::before {
-            content: '';
-        }
+		.link::before {
+			content: '';
+		}
 
-        .link--iocaste {
-            font-family: lust-fine, sans-serif;
-            overflow: hidden;
-            padding: 7px 0;
-        }
+		.link--iocaste {
+			font-family: lust-fine, sans-serif;
+			overflow: hidden;
+			padding: 7px 0;
+		}
+
 		body,
 		td,
 		th {
@@ -66,6 +67,20 @@
 		main {
 			margin: 3em auto 0;
 			width: 20.5em;
+		}
+
+		nav {
+			overflow: hidden;
+			background-color: #333;
+			position: fixed;
+			width: 100%;
+			height: 8%;
+			padding-left: 5%;
+			top: 0;
+			
+		}
+		li{
+			list-style-type: none;
 		}
 
 		div,
@@ -795,26 +810,29 @@
 				color: var(--color2);
 			}
 		}
-		a{
+
+		a {
 			/* text-decoration: none; */
 			color: aliceblue;
 		}
+		nav li a:hover {
+            font-weight: bold;
+        }
 	</style>
 </head>
 
 <body>
-	<header style="text-align: left;">
-		<ul class="link__content">
-			<li>
+	<nav>
+		<ul>
+			<li class="link__content">
 				<a href="./index.html" class="link link--iocaste">
-					<span>返回主页</span>
+					Home
 				</a>
 			</li>
-
 		</ul>
-	</header>
+	</nav>
 	<br><br><br><br><br><br>
-	<div  style="text-align: center;">
+	<div style="text-align: center;">
 		(<span class="b-arm">╯</span>°□°）<span class="b-arm">╯</span> <span class="b-table">┻━┻</span> <span
 			class="b-table">┻━┻</span> <span class="b-table">┻━┻</span> <span class="b-table">┻━┻</span>
 		<br>
@@ -823,10 +841,9 @@
 	</div>
 	<br><br><br>
 
-	
+
 	<div>
-		<h1 style="text-align: center;"><img src="../img/qq.png" width="10%"><a
-				href="">QQ</a></h1><br>
+		<h1 style="text-align: center;"><img src="../img/qq.png" width="10%">QQ</h1><br>
 
 	</div>
 	<div>
@@ -850,14 +867,11 @@
 
 	</div>
 	<br><br><br>
-
-	<footer class="footer" align="center">
-		<p><a href="./index.html">返回主页</a></p>
-	</footer>
-
 	<div style="text-align: center;">
 		<br><br><br><br>
-		<span class="i-t_arm">ノ</span>┬─┬<span class="i-t_arm">ノ</span> <span class="i-trajectory">︵</span> <span class="i-person">( <span class="i-arm">\</span><span class="i-face">o°o</span>)<span class="i-arm">\</span></span>
+		<span class="i-t_arm">ノ</span>┬─┬<span class="i-t_arm">ノ</span> <span class="i-trajectory">︵</span> <span
+			class="i-person">( <span class="i-arm">\</span><span class="i-face">o°o</span>)<span
+				class="i-arm">\</span></span>
 	</div>
 </body>
 

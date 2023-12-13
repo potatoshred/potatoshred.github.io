@@ -20,7 +20,7 @@
             font-size: 18px;
             position: relative;
             text-decoration: none;
-            color: rgb(24, 24, 24);
+            color: white;
         }
 
         .link::before,
@@ -28,7 +28,7 @@
             position: absolute;
             width: 100%;
             height: 1px;
-            background: rgb(24, 24, 24);
+            background: white;
             top: 100%;
 
         }
@@ -40,79 +40,100 @@
         .link--iocaste {
             padding: 7px 0;
         }
+
+        nav {
+            overflow: hidden;
+            background-color: #333;
+            position: fixed;
+            width: 100%;
+            top: 0;
+        }
+        nav li a:hover {
+            font-weight: bold;
+        }
+        li{
+			list-style-type: none;
+		}
+        
+
     </style>
 </head>
 
-<body bgcolor="aliceblue">
-    <header>
-        <ul class="link__content">
-            <li>
-                <a href="" class="link link--iocaste">
-                    <span>返回班级主页</span>
+<body bgcolor="white">
+    <nav>
+        <ul>
+            <li class="link__content">
+                <a href="./index.html" class="link link--iocaste">
+                    Home
                 </a>
             </li>
         </ul>
-    </header>
+    </nav>
 
+    <br><br>
     <div class="videolist">
-        曾经玩过一点VFX(Visual Effects)~
+        <h1>曾经玩过一点VFX (Visual Effects)~</h1>
     </div>
+    <br>
     <div class="videolist">
         <img src="../img/绘图1.png" width="88">
+        <br>
+        <span style="color: black;font-size: 1rem;">(奇怪的技能树)</span>
     </div>
-    
+
     <hr>
     <div class="videolist">
         一些小玩意儿~
     </div>
-    
+
     <div class="videolist">
 
-        <h1>
-            阿卡林的消失
-        </h1>
+
         <h1>
             <video src="../vid/akari.mp4" controls type="video/mp4"></video>
         </h1>
+        <h1>
+            阿卡林的消失
+        </h1>
 
         <hr>
-        <h1>
-            2D Smoke
-        </h1>
         <h1>
             <video src="../vid/2dsmoke.mp4" controls type="video/mp4"></video>
         </h1>
+        <h1>
+            2D Smoke
+        </h1>
 
         <hr>
-        <h1>
-            生长
-        </h1>
         <h1>
             <video src="../vid/growth.mp4" controls type="video/mp4"></video>
         </h1>
+        <h1>
+            生长
+        </h1>
 
         <hr>
-        <h1>
-            破碎
-        </h1>
         <h1>
             <video src="../vid/fracture.mp4" controls type="video/mp4"></video>
         </h1>
+        <h1>
+            破碎
+        </h1>
 
         <hr>
         <h1>
-            二次元动力学
-        </h1>
-        <h1>
             <video src="../vid/nijigen_dynamics.mp4" controls type="video/mp4"></video>
         </h1>
-
-        <hr>    
         <h1>
-            Datamosh
+            二次元动力学
         </h1>
+
+        <hr>
         <h1>
             <video src="../vid/yukanyan.mp4" controls type="video/mp4"></video>
+        </h1>
+        <h1>
+            Datamosh
         </h1>
 
     </div>

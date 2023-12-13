@@ -1,125 +1,63 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-
 <head>
-    <meta charset="utf-8">
-    <title>Untitled Document</title>
-    <link rel="stylesheet" href="./tst.css">
-    <!--	<meta http-equiv="Refresh" content="5;url=http://www.w3school.com.cn" />-->
-    <style type="text/css">
-        body,
-        td,
-        th {
-            color: #000000;
-        }
+  <title>固定在顶部的导航栏</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
 
-        table {
-            padding: 10px;
-            column-gap: 20px;
-            box-align: center;
+    /* 导航栏的样式 */
+    nav {
+      overflow: hidden;
+      background-color: #333;
+      position: fixed; /* 让导航栏固定在屏幕顶部 */
+      width: 100%;
+      top: 0;
+    }
 
-        }
+    nav ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
 
-        canvas {
-            background-color: black;
-        }
+    nav li {
+      float: left;
+    }
 
-        input:invalid {
-            background-color: red;
-            animation: animation .5s;
-        }
-        @keyframes animation{
-            25%{
-                transform: translate(10px);
-            }
-            50%{
-                transform: translate(-10px);
-            }
-            75%{
-                transform: translate(10px);
-            }
-        }
+    nav li a {
+      display: block;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+    }
 
-
-        button{
-            width: 64px;
-            height: 32px;
-        }
-
-        button::after{
-            display: block;
-            height: 20px;
-            width: 20px;
-            background-color: rebeccapurple;
-            content: attr(data-num);
-            border-radius: 50%;
-            color: white;
-            text-align: center;
-            line-height: 20px;
-            position: relative;
-            top: -28px;
-            right: -47px;
-        }
-        button:nth-child(2)::after{
-            background-color: green;
-            color: aquamarine;
-        }
-        .box{
-            width: 100vw;
-            height: 100vh;
-        }
-    </style>
+    nav li a:hover {
+      background-color: #111;
+    }
+  </style>
 </head>
+<body>
 
-<body bgcolor="grey">
-    <div class="box">
-        <div class="balls" id="balls">
+<nav>
+  <ul>
+    <li><a href="#home">首页</a></li>
+    <li><a href="#news">新闻</a></li>
+    <li><a href="#contact">联系方式</a></li>
+    <li><a href="#about">关于</a></li>
+  </ul>
+</nav>
 
-        </div>
-    </div>
-    <script src="./tst.js"></script>
-    <br><br>
-    <input type="text" placeholder="数字" pattern="[0-9]*">
-    <br><br>
-    <button data-num="5">按钮</button>
-    <br><br>
-    <button data-num="6">按钮</button>
-
-    <!-- <img src="../img/pfp.jpg">图片</img>
-
-    <table width="400" border="1">
-        <tr>
-            <th align="left">消费项目....</th>
-            <th align="right">一月</th>
-            <th align="right">二月</th>
-        </tr>
-        <tr>
-            <td align="left">衣服</td>
-            <td align="right">$241.10</td>
-            <td align="right">$50.20</td>
-        </tr>
-        <tr>
-            <td align="left">化妆品</td>
-            <td align="right">$30.00</td>
-            <td align="right">$44.45</td>
-        </tr>
-        <tr>
-            <td align="left">食物</td>
-            <td align="right">$730.40</td>
-            <td align="right">$650.00</td>
-        </tr>
-        <tr>
-            <th align="left">总计</th>
-            <th align="right">$1001.50</th>
-            <th align="right">$744.65</th>
-        </tr>
-    </table>
-	
-	<textarea placeholder="advsfg" ></textarea>
-    <br />
-    <br />
-    <img src="../img/pfp.jpg" -->
+<!-- 用一些内容填充页面，以便能够看到导航栏固定在顶部 -->
+<div style="height: 1000px; padding-top: 40px;">
+  <h2>页面内容</h2>
+  <p>这里是页面的内容...</p>
+</div>
 
 </body>
-
 </html>

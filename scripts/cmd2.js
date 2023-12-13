@@ -35,6 +35,8 @@ window.onload = function () {
             window.open("./start.html");
         }else if (s=="contact"){
             window.open("./contacme.html");
+        }else if (s=="works"){
+            window.open("./works.html");
         }else if (s=="playgound"){
             window.open("./test.html");
         }else if (s=="help"){

@@ -84,20 +84,32 @@
 				background-position: 200% center;
 			}
 		}
+		nav {
+            overflow: hidden;
+            background-color: #333;
+            position: fixed;
+            width: 100%;
+            top: 0;
+        }
+        li{
+			list-style-type: none;
+		}
+		a:hover{
+            font-weight: bolder;
+        }
 	</style>
 </head>
 
 <body style="background-color:rgb(63, 62, 62) ;">
-	<header>
-		<ul class="link__content">
-			<li>
-				<a href="" class="link link--iocaste">
-					<span>返回班级主页</span>
-				</a>
-			</li>
-
-		</ul>
-	</header>
+    <nav>
+        <ul>
+            <li class="link__content">
+                <a href="./index.html" class="link link--iocaste">
+                    返回CS2309
+                </a>
+            </li>
+        </ul>
+    </nav>
 
 	<h1 class="animate-charcter">
 		✌️624🔆

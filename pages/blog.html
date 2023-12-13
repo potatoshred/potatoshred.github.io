@@ -32,7 +32,7 @@
             font-size: 18px;
             position: relative;
             white-space: nowrap;
-            color: var(--color-link);
+            color: white;
             text-decoration: none;
         }
 
@@ -56,22 +56,37 @@
             overflow: hidden;
             padding: 7px 0;
         }
+
+        nav {
+            overflow: hidden;
+            background-color: #333;
+            position: fixed;
+            width: 100%;
+            top: 0;
+        }
+
+        nav li a:hover {
+            font-weight: bold;
+        }
+
+        li {
+            list-style-type: none;
+        }
     </style>
 </head>
 
 <body bgcolor="black">
-
+    <nav>
+        <ul>
+            <li class="link__content">
+                <a href="./index.html" class="link link--iocaste">
+                    Home
+                </a>
+            </li>
+        </ul>
+    </nav>
     <div class="image" style="color: white;text-align: center; text-shadow: 2px 2px 2px black">
-        <header style="text-align: left;">
-            <ul class="link__content">
-                <li>
-                    <a href="./index.html" class="link link--iocaste">
-                        <span>返回主页</span>
-                    </a>
-                </li>
 
-            </ul>
-        </header>
         <div><br><br><br>
             <p>
                 <font size="128" text-shadow: 2px 2px 2px black;>最近看的东西~</font>
@@ -195,10 +210,12 @@
             </tr>
             <tr>
                 <td style="width:50%">
-                    <a href="./start.html" style="text-decoration: none;color: aliceblue;"><img src="../img/xiaozi1.png" width="64%"></a>
+                    <a href="./start.html" style="text-decoration: none;color: aliceblue;"><img src="../img/xiaozi1.png"
+                            width="64%"></a>
                 </td>
                 <td>
-                    <h3 style="color:rgb(255, 247, 0);font-size: 4vw;"><a href="./start.html" style="text-decoration: none;color: aliceblue;">HUST⚔️ONLINE</a></h3>
+                    <h3 style="color:rgb(255, 247, 0);font-size: 4vw;"><a href="./start.html"
+                            style="text-decoration: none;color: aliceblue;">HUST⚔️ONLINE</a></h3>
                 </td>
             </tr>
             <tr>
@@ -211,16 +228,6 @@
             </tr>
 
         </table>
-        <footer style="text-align: left;color: aliceblue;">
-            <ul class="link__content">
-                <li>
-                    <a href="./index.html" class="link link--iocaste">
-                        <span>返回主页</span>
-                    </a>
-                </li>
-
-            </ul>
-        </footer>
     </div>
 
 </body>
