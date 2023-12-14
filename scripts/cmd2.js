@@ -1,15 +1,13 @@
 window.onload = function () {
     var input = document.getElementById('inCLI');
+    input.focus();
     var output = document.getElementById('output');
     var pages = document.getElementById('pages');
     pages = pages.getElementsByTagName('div');
-    // Turn HTML into lines for printing.
+
     processPages();
-    // Print initial help page.
-    // printLines(pages[0]);
-    // Focus on input.
-    // Disabled for embedded use
-    input.focus();
+
+    
 
     document.body.onkeypress = function (e) {
         // Not enter
