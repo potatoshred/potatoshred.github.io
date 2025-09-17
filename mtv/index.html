@@ -378,12 +378,15 @@
 
     <!-- 底部播放器栏 -->
     <div class="player-footer-bar">
+        <canvas id="plexus-canvas" style="position: absolute; left: 0; right: 0; top: -120px; width: 100%; height: 120px; z-index: 0;"></canvas>
+        <canvas id="visualizer" style="position: absolute; left: 0; right: 0; top: -60px; width: 100%; height: 60px; z-index: 1;"></canvas>
         <div class="footer-inner">
             <div class="footer-now-playing">
                 <h3>正在播放</h3>
                 <div id="footer-current-song">未选择歌曲</div>
             </div>
             <div class="footer-audio-wrap">
+
                 <div class="custom-progress" id="custom-progress">
                     <div class="custom-progress-bar" id="custom-progress-bar" style="width:0%"></div>
                     <div class="custom-progress-knob" id="custom-progress-knob" style="left:0%"></div>
@@ -646,6 +649,194 @@
         audioPlayer.volume = volumeRange.value;
         updateVolumeIcon();
         updatePlayBtn();
+
+        // --- 可视化特效 ---
+        const visualizerCanvas = document.getElementById('visualizer');
+        const visualizerCtx = visualizerCanvas.getContext('2d');
+        const plexusCanvas = document.getElementById('plexus-canvas');
+        const plexusCtx = plexusCanvas.getContext('2d');
+
+        let audioCtx;
+        let analyser;
+        let source;
+        let particlesArray = [];
+        let hue = 200; // 冷色起点 (蓝青色)
+        const minHue = 180; // 冷色区间起点 (青色)
+        const maxHue = 240; // 冷色区间终点 (蓝色)
+
+        function setupVisualizers() {
+            if (!audioCtx) {
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioCtx.createAnalyser();
+                    source = audioCtx.createMediaElementSource(audioPlayer);
+                    source.connect(analyser);
+                    analyser.connect(audioCtx.destination);
+                } catch (e) {
+                    console.error("AudioContext is not supported.", e);
+                    return;
+                }
+            }
+
+            resizeCanvases();
+            
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            // --- Plexus粒子逻辑 ---
+            const numberOfParticles = 18; // 原为30，减少粒子数量
+
+            class Particle {
+                constructor(x, y, size, speedX, speedY) {
+                    this.x = x;
+                    this.y = y;
+                    this.size = size;
+                    this.speedX = speedX;
+                    this.speedY = speedY;
+                }
+                update(bassLevel) {
+                    // 使用bassLevel调整速度
+                    const speedMultiplier = 1 + bassLevel / 255;
+                    this.x += this.speedX * speedMultiplier;
+                    this.y += this.speedY * speedMultiplier;
+
+                    if (this.x > plexusCanvas.width || this.x < 0) this.speedX *= -1;
+                    if (this.y > plexusCanvas.height || this.y < 0) this.speedY *= -1;
+                }
+                draw(color) {
+                    plexusCtx.fillStyle = color;
+                    plexusCtx.beginPath();
+                    plexusCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    plexusCtx.fill();
+                }
+            }
+
+            function initPlexus() {
+                particlesArray = [];
+                for (let i = 0; i < numberOfParticles; i++) {
+                    let size = Math.random() * 1.5 + 0.5;
+                    let x = Math.random() * plexusCanvas.width;
+                    let y = Math.random() * plexusCanvas.height;
+                    let speedX = (Math.random() * 0.4) - 0.2;
+                    let speedY = (Math.random() * 0.4) - 0.2;
+                    particlesArray.push(new Particle(x, y, size, speedX, speedY));
+                }
+            }
+
+            function connectParticles(lineColor) {
+                for (let a = 0; a < particlesArray.length; a++) {
+                    for (let b = a; b < particlesArray.length; b++) {
+                        let distance = Math.sqrt(
+                            Math.pow(particlesArray[a].x - particlesArray[b].x, 2) +
+                            Math.pow(particlesArray[a].y - particlesArray[b].y, 2)
+                        );
+                        if (distance < 80) {
+                            plexusCtx.strokeStyle = lineColor;
+                            plexusCtx.lineWidth = 0.5;
+                            plexusCtx.beginPath();
+                            plexusCtx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                            plexusCtx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                            plexusCtx.stroke();
+                        }
+                    }
+                }
+            }
+
+            initPlexus();
+
+            function animate() {
+                if (audioPlayer.paused) {
+                    requestAnimationFrame(animate);
+                    return;
+                };
+
+                requestAnimationFrame(animate);
+                analyser.getByteFrequencyData(dataArray);
+                visualizerCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+                plexusCtx.clearRect(0, 0, plexusCanvas.width, plexusCanvas.height);
+                // --- 音频能量 ---
+                const bassLevel = dataArray.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
+                const midLevel = dataArray.slice(5, 15).reduce((a, b) => a + b, 0) / 10;
+                // 冷色区间内根据能量线性插值色相
+                const energy = Math.max(0, Math.min(1, (bassLevel + midLevel) / 510));
+                hue = minHue + (maxHue - minHue) * energy;
+                // 冷色渐变
+                const mainColor = `hsl(${hue}, 80%, 55%)`;
+                const secondaryColor = `hsl(${minHue}, 60%, 60%)`;
+                const particleColor = `hsla(${hue}, 80%, 70%, 0.8)`;
+                const lineColor = `hsla(${hue}, 80%, 55%, ${Math.max(0.1, Math.min(0.5, bassLevel / 255))})`;
+
+                // --- 绘制频谱 ---
+                const barWidth = (visualizerCanvas.width / bufferLength) * 0.7; // 更细的宽度
+                let barHeight;
+                let x = 0;
+                const gradient = visualizerCtx.createLinearGradient(0, 0, 0, visualizerCanvas.height);
+                gradient.addColorStop(0, secondaryColor);
+                gradient.addColorStop(0.5, mainColor);
+                gradient.addColorStop(1, `hsla(${maxHue}, 80%, 55%, 0.5)`);
+                let tmp = Math.floor(bufferLength*0.7);
+                for (let i = 0; i < tmp*2; i++) {
+                    barHeight = dataArray[i<tmp?tmp-i:i-tmp] * 0.25;
+                    visualizerCtx.fillStyle = gradient;
+                    visualizerCtx.fillRect(x, visualizerCanvas.height - barHeight, barWidth, barHeight);
+                    x += barWidth + 1; // 间距也略减
+                }
+
+                // --- 绘制Plexus ---
+                particlesArray.forEach(p => p.update(bassLevel));
+                particlesArray.forEach(p => p.draw(particleColor));
+                connectParticles(lineColor);
+            }
+            animate();
+        }
+
+        function resizeCanvases() {
+            const parentWidth = visualizerCanvas.parentElement.offsetWidth;
+            const dpr = window.devicePixelRatio || 1;
+            // 视觉高度
+            const visHeight = 60;
+            const plexusHeight = 120;
+            // 设置实际像素尺寸
+            visualizerCanvas.width = parentWidth * dpr;
+            visualizerCanvas.height = visHeight * dpr;
+            plexusCanvas.width = parentWidth * dpr;
+            plexusCanvas.height = plexusHeight * dpr;
+            // 保持CSS尺寸
+            visualizerCanvas.style.width = parentWidth + 'px';
+            visualizerCanvas.style.height = visHeight + 'px';
+            plexusCanvas.style.width = parentWidth + 'px';
+            plexusCanvas.style.height = plexusHeight + 'px';
+            // 缩放上下文
+            visualizerCtx.setTransform(1, 0, 0, 1, 0, 0);
+            visualizerCtx.scale(dpr, dpr);
+            plexusCtx.setTransform(1, 0, 0, 1, 0, 0);
+            plexusCtx.scale(dpr, dpr);
+            // 重新设置频谱数量
+            // if (analyser) {
+            //     // 频谱数量与宽度成比例，最小32，最大128
+            //     let bars = Math.round(parentWidth / 12);
+            //     bars = Math.max(128, Math.min(512, bars));
+            //     let fftSize = 2;
+            //     while (fftSize < bars * 2) fftSize *= 2;
+            //     analyser.fftSize = fftSize;
+            // }
+        }
+
+        audioPlayer.addEventListener('play', () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            if (!analyser) {
+                setupVisualizers();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (analyser) {
+                resizeCanvases();
+            }
+        });
     </script>
 </body>
 </html>
