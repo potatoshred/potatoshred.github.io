@@ -733,7 +733,7 @@
                         );
                         if (distance < 80) {
                             plexusCtx.strokeStyle = lineColor;
-                            plexusCtx.lineWidth = 0.5;
+                            plexusCtx.lineWidth = 0.5*Math.sqrt((80-distance)/80.);
                             plexusCtx.beginPath();
                             plexusCtx.moveTo(particlesArray[a].x, particlesArray[a].y);
                             plexusCtx.lineTo(particlesArray[b].x, particlesArray[b].y);
