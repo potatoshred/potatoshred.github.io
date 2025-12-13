@@ -1,0 +1,157 @@
+<!DOCTYPE html><html lang="zh-CN" id="theme-light-mode"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="pttsrd"><title>RISCV代理内核实验：系统调用、异常和外部中断（一）机器态和内核态 · PTTSRD</title><meta name="description" content="开始之前发一下牢骚，这门课的课堂总觉得不得劲，感觉讲的没什么激情。
+0、从CPU到操作系统内核
+
+这门课之前我们已经在logisim中捏了一个五段流水线的CPU，支持20多条简单指令，支持多级中断、重定向、分支预测等等功能。
+简单回想一下CPU流程：
+
+取指 - 译码 - 执行 - 访存 - 写回
+"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#0%E3%80%81%E4%BB%8ECPU%E5%88%B0%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%86%85%E6%A0%B8"><span class="toclist-text">0、从CPU到操作系统内核</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E4%B8%80%E3%80%81%E6%9C%BA%E5%99%A8%E6%80%81"><span class="toclist-text">一、机器态</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#1-%E6%8C%87%E5%AE%9A%E6%A0%88%E5%BA%95%E5%9C%B0%E5%9D%80"><span class="toclist-text">1. 指定栈底地址</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#2-%E8%AE%BE%E7%BD%AE%E4%B8%AD%E6%96%AD%E5%90%91%E9%87%8F%E8%A1%A8%E5%9C%B0%E5%9D%80"><span class="toclist-text">2. 设置中断向量表地址</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#3-%E6%8E%88%E6%9D%83%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8"><span class="toclist-text">3. 授权中断和异常</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#4-%E8%B7%B3%E8%BD%AC%E5%88%B0%E5%86%85%E6%A0%B8%E6%80%81"><span class="toclist-text">4. 跳转到内核态</span></a></li></ol></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E4%BA%8C%E3%80%81S-mode%E5%86%85%E6%A0%B8%E6%80%81"><span class="toclist-text">二、S-mode内核态</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E4%BB%A3%E7%A0%81%E8%A7%A3%E8%AF%BBkernel"><span class="toclist-text">代码解读kernel&#x2F;*</span></a></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#0%E3%80%81%E4%BB%8ECPU%E5%88%B0%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%86%85%E6%A0%B8"><span class="toclist-text">0、从CPU到操作系统内核</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E4%B8%80%E3%80%81%E6%9C%BA%E5%99%A8%E6%80%81"><span class="toclist-text">一、机器态</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#1-%E6%8C%87%E5%AE%9A%E6%A0%88%E5%BA%95%E5%9C%B0%E5%9D%80"><span class="toclist-text">1. 指定栈底地址</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#2-%E8%AE%BE%E7%BD%AE%E4%B8%AD%E6%96%AD%E5%90%91%E9%87%8F%E8%A1%A8%E5%9C%B0%E5%9D%80"><span class="toclist-text">2. 设置中断向量表地址</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#3-%E6%8E%88%E6%9D%83%E4%B8%AD%E6%96%AD%E5%92%8C%E5%BC%82%E5%B8%B8"><span class="toclist-text">3. 授权中断和异常</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#4-%E8%B7%B3%E8%BD%AC%E5%88%B0%E5%86%85%E6%A0%B8%E6%80%81"><span class="toclist-text">4. 跳转到内核态</span></a></li></ol></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E4%BA%8C%E3%80%81S-mode%E5%86%85%E6%A0%B8%E6%80%81"><span class="toclist-text">二、S-mode内核态</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E4%BB%A3%E7%A0%81%E8%A7%A3%E8%AF%BBkernel"><span class="toclist-text">代码解读kernel&#x2F;*</span></a></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>RISCV代理内核实验：系统调用、异常和外部中断（一）机器态和内核态</a></h3></div><div class="post-content"><p><p>开始之前发一下牢骚，这门课的课堂总觉得不得劲，感觉讲的没什么激情。</p>
+<h1 id="0、从CPU到操作系统内核"><a href="#0、从CPU到操作系统内核" class="headerlink" title="0、从CPU到操作系统内核"></a>0、从CPU到操作系统内核</h1><img src="1765375446684.png" alt="1765375446684" style="zoom:67%;" />
+
+<p>这门课之前我们已经在logisim中捏了一个五段流水线的CPU，支持20多条简单指令，支持多级中断、重定向、分支预测等等功能。</p>
+<p>简单回想一下CPU流程：</p>
+<blockquote>
+<p>取指 - 译码 - 执行 - 访存 - 写回</p>
+</blockquote>
+<p>CPU结构：</p>
+<blockquote>
+<p>PC、程序ROM、寄存器堆、ALU、数据RAM</p>
+</blockquote>
+<p>PC一开始为0，指向ROM中第一条指令。指令如何来的？格式是riscv规范规定的。指令如何翻译的？根据其中的部分字段，经过一个转换，输出到各种信号如jal、jalr、bge、MemToReg。根据这些信号继续之后的阶段。</p>
+<p>更早，我们学了汇编和程序链接。简单回想一下C程序的一生：</p>
+<blockquote>
+<p>源码 -&gt; 汇编程序 -&gt; 机器码 -&gt;  代码段&#x2F;数据段 -&gt; elf&#x2F;pe</p>
+</blockquote>
+<p>我们的CPU是可以跑一些简单的程序的，比如冒泡排序。但我们的程序和标准的程序的区别在哪？</p>
+<ol>
+<li>我们的程序既定直接在ROM中，固定从0地址开始。</li>
+<li>我们的程序独占CPU，跑完return别的子程序才能使用。</li>
+<li>我们的程序可以使用所有我们实现的指令，没有限制。</li>
+<li>我们的程序没有堆栈等程序段的概念，读写数据完全有我们编写的汇编程序决策。</li>
+</ol>
+<p>其实想一想，这个框架基本上也很完善了。假设我们的指令已经实现完全，再找几个聪明的家伙想办法组织程序，已经相当可以了。但是聪明的家伙可能也想偷懒，</p>
+<ol>
+<li>汇编程序太难写了，想办法弄点高级语言。</li>
+<li>程序一多，怎么组织顺序是个问题。</li>
+<li>RAM数据、文件管理等等问题也随之而来。</li>
+<li>有些机器指令不能让一般人用。想用得去找管理员代劳。</li>
+<li>……</li>
+</ol>
+<p>需求增加了，大家抱着脑袋想解决方案。想来想去，发现很多都是组织和管理层面的问题，在裸机之上，要建立一套组织管理系统，满足各路程序的需求。随着人们不断完善，慢慢发展成了现在的操作系统。</p>
+<pre><code>操作系统的本质是分工和分权，正如公司的组织架构一样。CPU是公司的生产线，程序是员工，操作系统是管理层。管理层负责协调各个员工的工作，分配资源，处理异常情况，确保公司高效运转。员工不能随意操作生产线，必须通过管理层的授权和协调，确保生产线的稳定和安全。员工只需要专注于自己的工作，不用担心资源分配和异常处理的问题。
+</code></pre>
+<h1 id="一、机器态"><a href="#一、机器态" class="headerlink" title="一、机器态"></a>一、机器态</h1><p>我们先把目光聚焦在裸机：</p>
+<p>五段流水线中，我们的代码段是固定的ROM，数据段是固定的RAM，堆栈并没有涉及，中断是硬件级的。</p>
+<p>实际机器上，显然我们要给内存分区，一部分用来存放代码，一部分用来存放数据，一部分用来存放堆栈等等。中断程序显然在代码那部分内存中。</p>
+<p>比如说运行的程序想要打印一个字符，理论上它可以直接操作IO端口，但是这样太麻烦了，程序员不想管这些细节。于是就有了系统调用的概念，程序通过一个特殊的指令（ecall）触发一个 <code>异常</code>，CPU跳转到中断处理程序，内核根据程序传递的参数完成打印字符的功能，然后返回用户程序继续执行。是的，我们在五段流水线中实现过这个功能，只不过我们的显示器是7段数码管而已。还记得实验中ecall的参数吗，系统调用号0x22在a7寄存器中，参数在a0中。</p>
+<p><img src="/2025/20251210RISCV%20PKE%E2%80%94%E6%9C%BA%E5%99%A8%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/1765538090819.png" alt="1765538090819"></p>
+<pre><code>内核的基本功能之一：系统调用。
+</code></pre>
+<p>程序加载到内存中，本质是加载该程序的代码段和数据段到内存的指定位置，然后设置PC指向代码段的入口地址，堆栈指针sp指向堆栈区域的顶端。那么首先，代码段和数据段放在哪里呢？当然是不能放在和内核一样的地方了，否则程序一运行就把内核覆盖掉了。我们需要给内核和用户程序划分不同的内存区域。内核其实也是程序，也需要代码段和数据段，还有堆栈段。程序与程序之间，公用的是CPU，但我们要注意寄存器，在程序切换时要保存现场，恢复现场。</p>
+<p>那么问题来了</p>
+<pre><code>现场保存在哪里？内核区域还是用户程序区域？
+</code></pre>
+<p><strong>请你在此处闭上眼睛</strong>，把自己想象成一位操作系统设计者，花几分钟思考一下这个问题。</p>
+<p>假设我们把现场保存到用户程序区域，那么当用户程序恶意修改了保存现场的内存区域怎么办？比如，低调的黑客修改了sp寄存器的值（sp寄存器指向程序的堆栈区域的顶端），让它指向了别的程序的内存区域，读取了别的程序的现场数据，甚至修改了别的程序的现场数据。这样的系统你敢用吗？</p>
+<p>假设我们把现场保存到内核区域，上面的问题就不存在了。用户程序无法访问内核区域的内存，无法修改保存现场的内存区域。这样就安全多了。系统内核就像一位公正的法官，确保每个程序都在自己的内存区域内运行，互不干扰。</p>
+<p>也就是说，我们要把程序现场保存到内核程序的堆栈区域。比如说中断发生时，CPU自动切换到内核模式的过程：读取sscratch寄存器的值（内核堆栈顶端地址），把当前sp寄存器的值（用户程序堆栈顶端地址）保存到内核堆栈中，然后把sp寄存器设置为sscratch寄存器的值，切换到内核堆栈，保存所有通用寄存器的值到内核堆栈中。中断处理程序执行完毕后，恢复所有通用寄存器的值，从内核堆栈中恢复sp寄存器的值，切换回用户程序堆栈，继续执行用户程序。</p>
+<pre><code>sscratch寄存器用于在用户模式和内核模式之间切换堆栈指针。比如：当系统启动时，操作系统会将sscratch寄存器设置为内核堆栈的顶端地址。当发生中断或异常时，CPU会自动将当前的堆栈指针（sp寄存器）保存到sscratch寄存器中，然后将sp寄存器切换到内核堆栈的地址。当中断处理完成后，CPU会从sscratch寄存器中恢复原来的堆栈指针，继续执行用户程序。
+</code></pre>
+<p>还需要注意的是中断代理。RISCV内核态并不是被设计成天生就能处理所有中断的，内核也不过是一个程序嘛，内核是CEO，真正的大权在硬件手里。内核要处理中断也需要“君权神授”。如何授予呢？是寄存器mideleg和medeleg硬件标记的。前者决定哪些中断可以被内核处理，后者决定哪些异常可以被内核处理。那么，一个最基本的内核，应该授权哪些中断给内核处理呢？软件中断、定时器中断、外部中断。这些中断是操作系统必须处理的中断。软件中断用于进程间通信（虽然我们实验一中没有实现多进程，但后面的实验要用到），定时器中断用于时间片轮转调度（虽然我们实验一中没有实现调度），外部中断用于处理IO设备请求。</p>
+<p>我们实验中是这样做的</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// macros used in following two statements are defined in kernel/riscv.h</span></span><br><span class="line"><span class="type">uintptr_t</span> interrupts = MIP_SSIP | MIP_STIP | MIP_SEIP;</span><br><span class="line"><span class="type">uintptr_t</span> exceptions = (<span class="number">1U</span> &lt;&lt; CAUSE_MISALIGNED_FETCH) | (<span class="number">1U</span> &lt;&lt; CAUSE_FETCH_PAGE_FAULT) |</span><br><span class="line">                       (<span class="number">1U</span> &lt;&lt; CAUSE_BREAKPOINT) | (<span class="number">1U</span> &lt;&lt; CAUSE_LOAD_PAGE_FAULT) |</span><br><span class="line">                       (<span class="number">1U</span> &lt;&lt; CAUSE_STORE_PAGE_FAULT) | (<span class="number">1U</span> &lt;&lt; CAUSE_USER_ECALL);</span><br></pre></td></tr></table></figure>
+
+<p>我们把SSIP（软件中断）、STIP（定时器中断，比如操作系统的时钟）、SEIP（外部中断，比如IO设备中断）中断授权给内核处理，把取指对齐异常、取指页错误、断点异常、加载页错误、存储页错误和用户态ecall异常授权给内核处理。这样，内核就可以处理中断和异常了。</p>
+<p>理解以上内容，我们就明确了 <code>机器态</code>下，我们需要完成以下任务：<code>①</code>指定栈底的地址；<code>②</code>设置中断向量表地址；<code>③</code>授权中断和异常；<code>④</code>跳转到内核态。最终目的是跳转到内核态，开始执行S-mode代码。<br>这部分代码在kernel&#x2F;machine&#x2F;*下实现。</p>
+<h2 id="1-指定栈底地址"><a href="#1-指定栈底地址" class="headerlink" title="1. 指定栈底地址"></a>1. 指定栈底地址</h2><pre><code>提问：这个栈是给谁用的？
+</code></pre>
+<p><code>A：机器态</code> <code>B：内核态</code> <code>C：用户态</code></p>
+<p>你想，这个简单，一开始的当然是给机器态用的。</p>
+<pre><code>那么，机器态为什么需要栈？或者说，机器态用栈干什么？真的需要栈吗？
+</code></pre>
+<p>（你开始思考）</p>
+<p>你看了一下上面说的机器态下需要完成的任务：</p>
+<p>授权中断和异常，这个过程需要用栈吗？嗯，不需要，这个过程就是写寄存器而已。</p>
+<p>跳转到内核态，这个过程需要用栈吗？嗯，不需要，这个过程就是修改 <code>mstatus</code>寄存器和 <code>mepc</code>寄存器而已。</p>
+<p>嗯，中断向量表是在什么段？代码段。但是，中断处理程序需要用栈吗？会的，中断处理程序也可能会调用函数，也可能会有局部变量，也可能会有递归调用，这些都需要栈来支持。</p>
+<p>所以，机器态需要栈吗？需要。那么，机器态的栈应该放在哪里呢？</p>
+<p>实际上，机器态的代码非常简单，只有两个目的：设置中断向量表地址，以及跳转到S-mode的配置工作，即使中断处理程序也非常简单，不会有复杂的函数调用和局部变量，所以其实很直接，手动指定一个合适的地址即可。</p>
+<h2 id="2-设置中断向量表地址"><a href="#2-设置中断向量表地址" class="headerlink" title="2. 设置中断向量表地址"></a>2. 设置中断向量表地址</h2><p>中断向量表地址是通过mtvec寄存器设置的。<code>mtvec</code>寄存器有两个字段：base和mode。base字段指定中断向量表的基地址，mode字段指定中断处理方式。我们这里使用直接模式（<code>mode=0</code>），即所有中断都跳转到同一个地址处理。中断处理程序根据 <code>mcause</code>寄存器的值判断具体的中断类型，然后调用相应的处理函数。在本实验中，我们把中断向量表地址设置为 <code>mtrapvec.c</code>中的 <code>mtrapvec</code>函数的地址，此函数中，我们在保存程序现场、恢复机器态寄存器后，调用 <code>handle_mtrap</code>函数，在 <code>handle_mtrap</code>函数中根据 <code>mcause</code>switch到处理具体的中断case。</p>
+<h2 id="3-授权中断和异常"><a href="#3-授权中断和异常" class="headerlink" title="3. 授权中断和异常"></a>3. 授权中断和异常</h2><p>授权中断和异常是通过 <code>mideleg</code>和 <code>medeleg</code>寄存器实现的。上面已经提到。</p>
+<h2 id="4-跳转到内核态"><a href="#4-跳转到内核态" class="headerlink" title="4. 跳转到内核态"></a>4. 跳转到内核态</h2><p>这里需要多个步骤：</p>
+<ol>
+<li><p>允许机器态中断：设置 <code>mstatus</code>寄存器的 <code>MIE</code>位为1。</p>
+</li>
+<li><p>规定下一个特权级为 <code>S-mode</code>（内核态）：设置 <code>mstatus</code>寄存器的 <code>MPP</code>位为 <code>01</code>。MPP即Machine Previous Privilege，表示上一个特权级别。在RISC-V中，有三种特权级别：用户态（U-mode）、内核态（S-mode）和机器态（M-mode）。当发生异常或中断时，CPU会自动切换到机器态，并将当前的特权级别保存到 <code>MPP</code>位中。通过设置 <code>MPP</code>位为 <code>01</code>，我们告诉CPU在执行 <code>mret</code>指令时切换到内核态。</p>
+</li>
+<li><p>设置 <code>mepc</code>寄存器为内核入口地址（<code>s_start</code>函数地址，即内核的入口点）。</p>
+</li>
+<li><p>执行 <code>mret</code>指令，跳转到内核态。该指令会将程序计数器（PC）设置为 <code>mepc</code>寄存器的值，并根据 <code>MPP</code>位切换到内核态。</p>
+<p>提问：mret会恢复现场吗？</p>
+</li>
+</ol>
+<p>mret只负责切换特权级别和跳转到指定地址，不会恢复寄存器的值。恢复寄存器的值需要在内核入口函数中手动完成。</p>
+<h1 id="二、S-mode内核态"><a href="#二、S-mode内核态" class="headerlink" title="二、S-mode内核态"></a>二、S-mode内核态</h1><p><img src="/2025/20251210RISCV%20PKE%E2%80%94%E6%9C%BA%E5%99%A8%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/1765556078541.png" alt="1765556078541"></p>
+<p>现代操作系统一般具有以下基本功能：</p>
+<ol>
+<li><p>系统调用接口：提供用户程序与内核交互的接口。</p>
+</li>
+<li><p>中断和异常处理：响应硬件中断和软件异常。</p>
+</li>
+<li><p>内存管理：分配和回收内存，管理虚拟内存。</p>
+</li>
+<li><p>进程管理：创建、调度和终止进程。</p>
+</li>
+<li><p>文件系统：管理文件和目录，提供文件读写接口。</p>
+</li>
+<li><p>设备管理：管理硬件设备，提供设备驱动程序.</p>
+<p>现在你是公司的CEO，你需要管理公司的日常运作（内存管理、进程管理、文件系统等）。你的员工（用户态程序）通过向你提出请求（系统调用）来完成他们的工作。你需要确保公司的资源得到合理分配，并处理各种突发事件（中断和异常）。</p>
+</li>
+</ol>
+<p>初创阶段的公司，功能不需要太复杂，先实现最基本的功能即可，比如：</p>
+<ol>
+<li>办公区域（内存管理）：粗略的划分内存区域，satp&#x3D;0，直接使用 <code>物理</code>内存，不用实现页表等复杂功能。</li>
+<li>部门协调（进程管理）：公司实际就两个人（内核和用户程序），实现简单的上下文程切换，不需要实现调度算法。</li>
+</ol>
+<p>至于文件系统和设备管理，可以先不实现，等公司发展壮大了再说。</p>
+<p>我们仅需要考虑的问题是：中断和异常处理如何实现？</p>
+<p>虽然这部分我们在机器态中讲过，但是内核态的中断和异常处理要有所不同。我们看看实验中的进程的数据结构</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">trapframe_t</span> &#123;</span></span><br><span class="line">  <span class="comment">// space to store context (all common registers)</span></span><br><span class="line">  <span class="comment">/* offset:0   */</span> riscv_regs regs;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// process&#x27;s &quot;user kernel&quot; stack</span></span><br><span class="line">  <span class="comment">/* offset:248 */</span> uint64 kernel_sp;</span><br><span class="line">  <span class="comment">// pointer to smode_trap_handler</span></span><br><span class="line">  <span class="comment">/* offset:256 */</span> uint64 kernel_trap;</span><br><span class="line">  <span class="comment">// saved user process counter</span></span><br><span class="line">  <span class="comment">/* offset:264 */</span> uint64 epc;</span><br><span class="line">&#125;trapframe;</span><br><span class="line"></span><br><span class="line"><span class="comment">// the extremely simple definition of process, used for begining labs of PKE</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">process_t</span> &#123;</span></span><br><span class="line">  <span class="comment">// pointing to the stack used in trap handling.</span></span><br><span class="line">  uint64 kstack;</span><br><span class="line">  <span class="comment">// trapframe storing the context of a (User mode) process.</span></span><br><span class="line">  trapframe* trapframe;</span><br><span class="line">&#125;process;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，内核为每个进程维护了一个 <code>trapframe</code>结构体，用于保存进程的寄存器状态、内核堆栈指针、内核陷阱处理程序指针和用户程序计数器等信息。当发生中断或异常时，内核会保存当前进程的寄存器状态到 <code>trapframe</code>中，然后切换到内核堆栈，执行内核陷阱处理程序。处理完成后，内核会从 <code>trapframe</code>中恢复进程的寄存器状态，继续执行用户程序。</p>
+<p>现场包括哪些内容呢？ICS上我们学过，现场包括所有通用寄存器的值、程序计数器（PC）、堆栈指针（SP，riscv中已包括在通用寄存器中）的值等。所以trapframe中有 <code>riscv_regs regs</code>和 <code>epc</code>字段。</p>
+<p>那么问题来了</p>
+<pre><code>为什么要给每个进程记录kernel_sp和kernel_trap呢？中断处理程序不是通用的吗？
+</code></pre>
+<p>（你开始思考）</p>
+<p>若使用同一个内核堆栈，那么当进程A和进程B都发生中断时，若中断程序等待IO阻塞，内核会切换处理B的中断。这样会导致进程A的中断处理程序的内容被进程B的中断处理程序覆盖掉，导致进程A的中断处理程序无法正确执行。</p>
+<p>再比如多核系统的情况，每个核可能同时处理不同进程的陷阱，如果所有进程共用一个内核堆栈，那么当多个进程同时发生陷阱时，内核会切换到同一个内核堆栈来处理它们的陷阱。这样会导致不同进程的陷阱处理程序的内容相互覆盖，导致陷阱处理程序无法正确执行。</p>
+<p>正确的做法是为每个进程分配独立的内核堆栈。当进程A发生中断时，内核切换到A的内核堆栈，保存A的寄存器状态到A的 <code>trapframe</code>中，执行中断处理程序。处理中断时，如果需要切换到进程B，将中断现场保存到进程A的PCB中一个特定结构 <code>cpu_context</code>(本实验中未实现)，然后从B的PCB中恢复其之前保存的上下文到CPU寄存器中。</p>
+<pre><code>kernel_trap呢？
+</code></pre>
+<p>这其实是个设计选择， 对于 PKE 这个简单系统: 只有一个 CPU，只有一个&#x2F;少量进程，handler 永远是同一个函数，完全可以用全局变量或硬编码！ 但是为了让设计更通用化，便于将来扩展多 CPU、多进程等功能，设计成每个进程都有自己的 kernel_trap 指针，这样每个进程可以有不同的中断处理程序。这也是xv6等操作系统的设计思路，经过实践的验证。</p>
+<pre><code>既然trapframe里已经记录了kernel_sp和kernel_trap，为什么还要在process里记录kstack呢？
+</code></pre>
+<p>因为本实验中trapframe是共享的，所有进程的trapframe指针都指向同一个trapframe结构体。所以，trapframe中的kernel_sp和kernel_trap字段实际上是当前运行进程的内核堆栈指针和内核陷阱处理程序指针，每次switch_to()时都会更新这两个字段。所以需要在process结构体中记录kstack字段，表示该进程的内核堆栈地址。</p>
+<p>以上我们对trapframe和process结构体进行了分析，理解了其必要性，那么充分性如何呢？</p>
+<p>我们看看内核态下 <code>进程</code>相关的任务：</p>
+<ol>
+<li>保存现场：将当前进程的寄存器状态保存到 <code>trapframe</code>中的 <code>riscv_regs</code>和 <code>epc</code>字段。</li>
+<li>处理中断和异常：调用相应的处理函数，需要用到函数入口：<code>kernel_trap</code>，堆栈：<code>kernel_sp</code>。</li>
+<li>恢复现场：从 <code>trapframe</code>中恢复进程的寄存器状态，继续执行用户程序。</li>
+<li>切换进程：保存当前进程的现场，加载下一个进程的现场，切换到下一个进程。</li>
+</ol>
+<p>可以看到，trapframe和process结构体已经包含了完成这些任务所需的所有信息，所以是充分的。</p>
+<h1 id="代码解读kernel"><a href="#代码解读kernel" class="headerlink" title="代码解读kernel&#x2F;*"></a>代码解读kernel&#x2F;*</h1><p>结合kernel.lds和代码，我们可以看到内核的内存布局：</p>
+<p><img src="/2025/20251210RISCV%20PKE%E2%80%94%E6%9C%BA%E5%99%A8%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/1765551646173.png" alt="1765551646173"><br><img src="/2025/20251210RISCV%20PKE%E2%80%94%E6%9C%BA%E5%99%A8%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/1765553404961.png" alt="1765553404961"></p>
+<p>使用 <code>riscv64-unknown-elf-readelf -W -a obj/riscv-pke</code>查看make后的代理内核，可以看到符号等信息。</p>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-10</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约5312个字, 17分钟42秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20RISCV%E4%BB%A3%E7%90%86%E5%86%85%E6%A0%B8%E5%AE%9E%E9%AA%8C%EF%BC%9A%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E3%80%81%E5%BC%82%E5%B8%B8%E5%92%8C%E5%A4%96%E9%83%A8%E4%B8%AD%E6%96%AD%EF%BC%88%E4%B8%80%EF%BC%89%E6%9C%BA%E5%99%A8%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81%0Ahttps://potatoshred.github.io/2025/20251210RISCV%20PKE%E2%80%94%E6%9C%BA%E5%99%A8%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2025/20251211RISCV%20PKE%E2%80%94ELF%E8%A7%A3%E6%9E%90%E4%B8%8E%E7%A8%8B%E5%BA%8F%E5%8A%A0%E8%BD%BD/" title="RISCV代理内核实验：系统调用、异常和外部中断（二）ELF解析与程序加载">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20250816%E6%88%91%E5%9B%9E%E6%9D%A5%E4%BA%86/" title="我回来了！">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
+    clientID: 'Ov23liukNOj2CUn7q94O',
+    clientSecret: '07f36f4b11607176041cec83da81621ad7c97643',
+    repo: 'potatoshred.github.io',      // The repository of store comments,
+    owner: 'potatoshred',
+    admin: ['potatoshred'],
+    id: 'RISCV代理内核实验：系统调用、异常和外部中断（一）机器态和内核态',      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+})
+gitalk.render('gitalk_container')</script></div></div></div></div><script src="/js/darkLightToggle.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/add-bookmark.js"></script><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>
