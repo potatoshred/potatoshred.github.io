@@ -13,7 +13,7 @@ html[id='theme-dark-mode'] img {
 body {
   color: rgba(0,0,0,0.9);
   font-family: 'PingHei', 'PingFang SC', Helvetica Neue, 'Work Sans', 'Hiragino Sans GB', 'Microsoft YaHei', SimSun, sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   width: 100%;
   margin: 0 auto 30px auto;
   background-color: #fff;
@@ -73,7 +73,6 @@ a:active {
   float: right;
   width: 70%;
   margin-top: 60px;
-  font-size: 18px;
 }
 .page-top {
   width: 70%;
@@ -129,7 +128,7 @@ a:active {
   padding-right: 30px;
 }
 .sidebar {
-  width: 15%;
+  width: 30%;
   -webkit-background-size: cover;
   background-size: cover;
   background-color: #fff;
@@ -268,10 +267,6 @@ a:active {
 .post .post-content h6 {
   color: #5f5f5f;
   font-size: 15px;
-}
-.post .post-content p {
-  font-size: 18px;
-  line-height: 2;
 }
 .post .post-footer {
   padding: 0 0 30px 0;
