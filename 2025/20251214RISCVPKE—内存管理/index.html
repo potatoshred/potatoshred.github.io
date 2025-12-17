@@ -1,0 +1,314 @@
+<!DOCTYPE html><html lang="zh-CN" id="theme-light-mode"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="pttsrd"><title>RISCV代理内核实验(五)：内存管理 · PTTSRD</title><meta name="description" content="在本实验中，我们将实现RISCV代理内核的内存管理功能，包括页表管理、虚拟内存映射和内存分配等。
+
+“All problems in computer science can be solved by another level of indirection.”“计算机科学中的所有问题都可以通过引入"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%83%8C%E6%99%AF"><span class="toclist-text">背景</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#PMM-%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toclist-text">PMM: 物理内存管理</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%A9%BA%E9%97%B2%E9%93%BE%E8%A1%A8%E5%AE%9E%E7%8E%B0"><span class="toclist-text">空闲链表实现</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%88%86%E9%85%8D%E9%A1%B5%E6%A1%86alloc-page"><span class="toclist-text">分配页框alloc_page</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%9B%9E%E6%94%B6%E9%A1%B5%E6%A1%86free-page"><span class="toclist-text">回收页框free_page</span></a></li></ol></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#VMM-%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toclist-text">VMM: 虚拟内存管理</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%86%85%E6%A0%B8%E8%BF%9B%E7%A8%8B%E9%A1%B5%E8%A1%A8"><span class="toclist-text">内核进程页表</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%94%A8%E6%88%B7%E8%BF%9B%E7%A8%8B%E9%A1%B5%E8%A1%A8"><span class="toclist-text">用户进程页表</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E4%B8%8B%E7%9A%84ELF%E5%8A%A0%E8%BD%BD"><span class="toclist-text">虚拟内存下的ELF加载</span></a></li></ol></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%83%8C%E6%99%AF"><span class="toclist-text">背景</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#PMM-%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toclist-text">PMM: 物理内存管理</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%A9%BA%E9%97%B2%E9%93%BE%E8%A1%A8%E5%AE%9E%E7%8E%B0"><span class="toclist-text">空闲链表实现</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%88%86%E9%85%8D%E9%A1%B5%E6%A1%86alloc-page"><span class="toclist-text">分配页框alloc_page</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%9B%9E%E6%94%B6%E9%A1%B5%E6%A1%86free-page"><span class="toclist-text">回收页框free_page</span></a></li></ol></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#VMM-%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toclist-text">VMM: 虚拟内存管理</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%86%85%E6%A0%B8%E8%BF%9B%E7%A8%8B%E9%A1%B5%E8%A1%A8"><span class="toclist-text">内核进程页表</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%94%A8%E6%88%B7%E8%BF%9B%E7%A8%8B%E9%A1%B5%E8%A1%A8"><span class="toclist-text">用户进程页表</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E4%B8%8B%E7%9A%84ELF%E5%8A%A0%E8%BD%BD"><span class="toclist-text">虚拟内存下的ELF加载</span></a></li></ol></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>RISCV代理内核实验(五)：内存管理</a></h3></div><div class="post-content"><p><p>在本实验中，我们将实现RISCV代理内核的内存管理功能，包括页表管理、虚拟内存映射和内存分配等。</p>
+<blockquote>
+<p>“All problems in computer science can be solved by another level of indirection.”<br>“计算机科学中的所有问题都可以通过引入一个中间层（间接层）来解决。”<br>— David Wheeler</p>
+</blockquote>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>实验一中，我们成功加载ELF文件并跳转到用户态执行，实现了单进程的内存分配。</p>
+<p>但是，我们是直接使用物理地址来访问内存的。还记得我们怎么分配的内存吗？</p>
+<p><code>[0x8000_0000 - 0x8100_0000]</code>这段内存划分给了Smode，</p>
+<p><code>[0x8100_0000 - 0x8800_0000]</code>这段内存划分给了Umode。</p>
+<p>我们还要给每个进程分配kstack和ustack，保证每个进程有独立的用户栈和内核栈（用于处理异常）。</p>
+<p>单进程的情况下，这样的内存分配是可以的，但是多来几个进程又该怎么办呢？</p>
+<blockquote>
+<p>看看历史上是怎么办的。</p>
+</blockquote>
+<p>最早有人想，我事先将内存划分成几个区域，每个区域都有独立的内核栈和用户栈，分配给不同的进程使用。这样不就行了？但是，每块区域的大小该怎么定呢？如果定得太大，内存浪费，能分的区域数量就少；如果定得太小，进程运行时可能会栈溢出。为了防止自己写的程序栈溢出，用户还要事先知道用户栈的大小。这中间就会产生沟通成本，还需要用户耗费脑力去避免栈溢出。显然，这种方式并不理想。</p>
+<p>理想的情况是什么？我们从用户的角度来看：</p>
+<ol>
+<li>我的空间是无限的，我可能不会用，但我要用时就得有。</li>
+<li>我的进程有独立的空间，隐私安全。</li>
+<li>我不需要关心别人，我的栈的地址永远是连续的，想用什么用什么。</li>
+</ol>
+<p>显然，作为乙方的你，觉得甲方的要求很过分，内存又不是无限的，怎么可能满足他的要求呢？就像服务业一样，用户只需要关心自己的需求，服务商负责提供服务，用户不需要关心服务商的资源分配和管理。交给服务商去想办法吧。</p>
+<p>有人想了个办法，既然静态分区不行，那就动态分配吧。用户需要多少内存，就在空闲内存中找一块合适的分配给用户。这段时期，首次适应、最佳适应等算法被提出，但都不能很好地解决内存碎片问题：分配时确实找到了合适的内存块，但释放时却产生了碎片，尽管总空闲内存可能足够，但无法满足新进程对连续内存空间的需求。</p>
+<p>有人提出改进：先将整个进程的数据暂存到磁盘，再重新分配一块连续的内存空间，然后将数据从磁盘重新读回内存，但这个过程涉及大量磁盘I&#x2F;O，效率很低。</p>
+<blockquote>
+<p>问题的根源在于，用户进程还是需要连续的物理内存空间。</p>
+</blockquote>
+<p>划时代的想法出现了：内存切片。跟前面的静态分区相似，但把内存划分成更小的块，称为页（page），就像切西瓜，先给每个人切一块，要是还想吃，就再切一块。从“刻舟求剑”到“量体裁衣”，从“雕版印刷”到“活字印刷”，不断满足进程的不确定性和突发性的需求特征，解放了用户的生产力。</p>
+<blockquote>
+<p>静态分区在确定性环境下效率极高，但面对变化时显得僵化；分页管理增加了管理开销，但适应性强，能应对多样化需求。没有放之四海而皆准的管理方法，只有最适合特定情境的管理策略，在确定与不确定之间寻找动态平衡。</p>
+</blockquote>
+<p>分页机制之上，又更进一步，提出了<code>虚拟内存</code>的概念。用户进程不再直接使用物理地址，而是使用虚拟地址。操作系统负责将虚拟地址映射到物理地址，这样用户进程就可以认为自己拥有连续的内存空间，而实际上这些空间可能分散在物理内存的各个角落，甚至部分数据还存储在磁盘上。</p>
+<blockquote>
+<p>本质是 “逻辑视图”与“物理视图”的解耦。</p>
+</blockquote>
+<h1 id="PMM-物理内存管理"><a href="#PMM-物理内存管理" class="headerlink" title="PMM: 物理内存管理"></a>PMM: 物理内存管理</h1><pre><code>分页从哪个阶段开始呢？
+</code></pre>
+<p>分页的目的是满足多进程的内存需求，因此分页管理从多进程开始之前就要启动，也就是在S态内核初始化阶段。</p>
+<p>M态肯定不需要分页管理，M态的任务比较简单，也不需要频繁切换进程，因此直接使用物理地址即可。</p>
+<p>S态内核初始化阶段，我们需要初始化物理内存管理模块（Physical Memory Management，PMM）。PMM的职责有：</p>
+<ol>
+<li>管理物理内存的分配和释放。</li>
+<li>提供页框（page frame）的分配接口，页框是分页管理的基本单位，通常为4KB。</li>
+<li>维护空闲页框链表，方便快速分配和回收。</li>
+</ol>
+<p>简单来说，要做的只有两件事：<code>页框分配</code>和<code>页框回收</code>。</p>
+<ul>
+<li><p>分配：从<code>空闲页框集合</code>中取出一个页框，返回其物理地址。</p>
+<ul>
+<li>分配的页框不能是已经被使用的页框</li>
+<li>分配的页框不能是保留页框（比如内核代码区、数据区等）</li>
+</ul>
+</li>
+<li><p>回收：将页框重新加入<code>空闲页框集合</code>。</p>
+<ul>
+<li>回收的页框必须是已经被分配出去的页框</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p><code>空闲页框集合</code>用什么数据结构来表示呢？</p>
+</blockquote>
+<p>看看历史的选择吧：</p>
+<ul>
+<li>位图（bitmap）：每一位表示一个页框的状态，0表示空闲，1表示已分配。<ul>
+<li>优点：空间效率高，4GB内存只需 128KB 位图。</li>
+<li>缺点: 分配时需线性扫描，O(n) 时间复杂度</li>
+<li>代表系统：早期批处理系统、CTSS、Multics</li>
+</ul>
+</li>
+<li>空闲链表：将空闲页框通过链表连接起来，分配时从链表头取出一个页框，回收时将页框插入链表头。<ul>
+<li>优点：分配和回收操作时间复杂度为O(1)。利用空闲页框本身存储链表指针 (无额外开销)。</li>
+<li>缺点：无法快速分配连续多页</li>
+<li>代表系统：Unix V6&#x2F;V7, BSD 4.x, 本实验 riscv-pke</li>
+</ul>
+</li>
+<li>伙伴系统（Buddy System）：将内存划分为大小为2的幂次方的块，分配时找到最合适的块，回收时合并相邻的空闲块。本质上是一种分层的空闲链表。<ul>
+<li>优点：减少内存碎片，支持快速分配连续多页</li>
+<li>缺点：实现复杂，管理开销较大</li>
+<li>代表系统：Linux (1991年至今), Windows NT</li>
+</ul>
+</li>
+<li>……….</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">1960s     1970s      1980s      1990s      2000s      2010s      2020s</span><br><span class="line">  ▼         ▼          ▼          ▼          ▼          ▼          ▼</span><br><span class="line">┌──────┐  ┌─────┐   ┌────────┐  ┌──────┐  ┌───────┐  ┌──────┐  ┌──────┐</span><br><span class="line">│Bitmap│  │Free │   │ Buddy  │  │ Slab │  │ NUMA  │  │ SLUB │  │ CMA  │</span><br><span class="line">│      │  │List │   │ System │  │      │  │ zones │  │      │  │      │</span><br><span class="line">└──────┘  └─────┘   └────────┘  └──────┘  └───────┘  └──────┘  └──────┘</span><br><span class="line">  │         │          │          │          │          │</span><br><span class="line">  │     Unix V6    Linux 0.11   Solaris   Linux 2.4  Linux 2.6.22</span><br><span class="line">  │      BSD        Windows     Linux 2.2</span><br><span class="line">  │                   NT</span><br><span class="line"> Multics,早期系统</span><br></pre></td></tr></table></figure>
+
+<p>riscv-pke使用的是最简单的 <code>空闲链表</code> 结构，适合教学目的，体现了物理内存管理的核心思想。 <code>xv6</code>也采用了类似的方式。</p>
+<h2 id="空闲链表实现"><a href="#空闲链表实现" class="headerlink" title="空闲链表实现"></a>空闲链表实现</h2><p>本实验中，物理内存从<code>0x8000_0000</code>开始，到<code>0x8800_0000</code>结束，共128MB。我们将这段内存划分为4KB的页框，共有32K个页框。</p>
+<p>全局变量<code>g_free_mem_list</code>表示空闲页框链表的头指针，链表中的每个节点表示一个空闲页框，节点结构如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">                                                                   g_free_mem_list</span><br><span class="line">                                                                      |</span><br><span class="line">                                                                      v</span><br><span class="line">+------------+   +------------+         +------------+   +------------+</span><br><span class="line">|   page 0   |   |   page 1   |         |  page 1022 |   |  page 1023 |</span><br><span class="line">+------------+   +------------+         +------------+   +------------+</span><br><span class="line">|  4KB free  |   |  4KB free  |         |  4KB free  |   |  4KB free  |</span><br><span class="line">+------------+   +------------+         +------------+   +------------+</span><br><span class="line">| next: NULL |  ↙| next: -----|  ↙··· - | next: -----|  ↙| next: NULL |</span><br><span class="line">+------------+↙  +------------+↙        +------------+↙  +------------+</span><br><span class="line">────────────────────────────────────────────────────────────────────────▶</span><br><span class="line">0x8000_0000      0x8000_1000      ···   0x803F_F000      0x8040_0000</span><br><span class="line">│                                                                     │      </span><br><span class="line">free_mem_start                                                        free_mem_end</span><br></pre></td></tr></table></figure>
+<p>是的，这里采用的是<code>头插法</code>，创建完成后，<code>g_free_mem_list</code>指向地址<code>最高</code>的空闲页框。</p>
+<h2 id="分配页框alloc-page"><a href="#分配页框alloc-page" class="headerlink" title="分配页框alloc_page"></a>分配页框alloc_page</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">page_addr = g_free_mem_list;</span><br><span class="line">g_free_mem_list = g_free_mem_list-&gt;next;</span><br><span class="line"><span class="keyword">return</span> page_addr;</span><br></pre></td></tr></table></figure>
+<h2 id="回收页框free-page"><a href="#回收页框free-page" class="headerlink" title="回收页框free_page"></a>回收页框free_page</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">page-&gt;next = g_free_mem_list;</span><br><span class="line">g_free_mem_list = page;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>其实就是出栈和入栈。</p>
+</blockquote>
+<h1 id="VMM-虚拟内存管理"><a href="#VMM-虚拟内存管理" class="headerlink" title="VMM: 虚拟内存管理"></a>VMM: 虚拟内存管理</h1><blockquote>
+<p>现在，请你忘掉物理内存的概念，你只知道需要的时候，直接向操作系统申请alloc_page()就好了。</p>
+</blockquote>
+<p>虚拟内存的核心在于地址映射。每个进程都有自己的虚拟地址空间，操作系统通过<code>页表</code>将虚拟地址映射到物理地址。</p>
+<p><code>satp</code>（Supervisor Address Translation and Protection，监管者地址转换和保护）是S态下的一个CSR。satp 有三个域：</p>
+<ul>
+<li>MODE：地址转换模式，RISCV64中通常为8，表示启用SV39分页机制。</li>
+<li>ASID：地址空间标识符，用于区分不同进程的地址空间。</li>
+<li>PPN：页表的物理页号，指向当前进程的根页表。</li>
+</ul>
+<p><img src="/2025/20251214RISCVPKE%E2%80%94%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/1765858926443.png" alt="1765858926443"></p>
+<p>通常，第一次进入S态时，会设置<code>satp=0</code>以禁用分页，在S态初始化页表以后，更改satp值来启用分页。</p>
+<p>本实验采用Sv39分页机制，虚拟地址空间为39位，分为三级页表，每级页表包含512个页表项（PTE），每个页表项大小为64bit，所以每个页表占用4KB（512 * 8 bytes），正好一个页框的大小。</p>
+<p>RV64下，satp寄存器的PPN字段占44位，表示页表的物理页号。页表的物理地址可以通过<code>PPN &lt;&lt; 12</code>计算得到(页框大小为4KB&#x3D;2^12B)。</p>
+<pre><code>44+12=56位，为什么不是64位？
+</code></pre>
+<p>正好缺了8位，这是因为按字节寻址，</p>
+<p>吗？</p>
+<p>并不是。还记得反汇编指令时，虚拟地址是什么样的吗？比如<code>8100015a: 04200513 li a0,66</code>，地址结尾并不是<code>0x00</code>。</p>
+<p>实际上，56位物理地址可以寻址 $2^{56}$ 字节的内存，相当于<code>64PB</code>。在可预见的未来，对于绝大多数应用（包括大型服务器和数据中心）都是完全足够的。直接实现完整的64位物理地址（16EB）需要更复杂的硬件电路来处理更多的地址线，会显著增加成本、功耗和设计复杂度，但收益却很小。</p>
+<blockquote>
+<p>x86-64&#x2F;AMD64支持52位物理地址，寻址4PB内存空间。</p>
+</blockquote>
+<blockquote>
+<p>ARMv8支持48位物理地址，寻址256TB内存空间。</p>
+</blockquote>
+<blockquote>
+<p>ARMv9支持52位物理地址，寻址4PB内存空间。(2024年手机开始搭载基于Armv9架构的芯片)。</p>
+</blockquote>
+<p>开始之前，请一定要弄清楚以下概念之间的关系：</p>
+<ul>
+<li>VA</li>
+<li>PA</li>
+<li>Page</li>
+<li>Page Table</li>
+<li>Page Directory</li>
+<li>PTE</li>
+<li>PDE</li>
+<li>VPN2, VPN1, VPN0</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">═══════════════════════════════════════════════════════════════════════════════════</span><br><span class="line">                              SV39 虚拟地址结构 (39位有效)</span><br><span class="line">═══════════════════════════════════════════════════════════════════════════════════</span><br><span class="line"></span><br><span class="line">   63         39 38       30 29       21 20       12 11                0</span><br><span class="line">  ┌─────────────┬───────────┬───────────┬───────────┬────────────────────┐</span><br><span class="line">  │  (Reserved) │   VPN[2]  │   VPN[1]  │   VPN[0]  │    Page Offset     │</span><br><span class="line">  │             │   9 bits  │   9 bits  │   9 bits  │     12 bits        │</span><br><span class="line">  └─────────────┴───────────┴───────────┴───────────┴────────────────────┘</span><br><span class="line">                │           │           │           │</span><br><span class="line">                │           │           │           └──► 页内偏移 (4KB页)</span><br><span class="line">                │           │           └──────────────► Level 0 索引 (512项)</span><br><span class="line">                │           └──────────────────────────► Level 1 索引 (512项)</span><br><span class="line">                └──────────────────────────────────────► Level 2 索引 (512项)</span><br><span class="line"></span><br><span class="line">═══════════════════════════════════════════════════════════════════════════════════</span><br><span class="line">                              页表项 (PTE) 结构 - 64位</span><br><span class="line">═══════════════════════════════════════════════════════════════════════════════════</span><br><span class="line"></span><br><span class="line">   63       54 53                                   10 9  8 7 6 5 4 3 2 1 0</span><br><span class="line">  ┌───────────┬───────────────────────────────────────┬────┬─┬─┬─┬─┬─┬─┬─┬─┐</span><br><span class="line">  │  Reserved │              PPN (44 bits)            │ RSW│D│A│G│U│X│W│R│V│</span><br><span class="line">  │  (10 bits)│          Physical Page Number         │    │ │ │ │ │ │ │ │ │</span><br><span class="line">  └───────────┴───────────────────────────────────────┴────┴─┴─┴─┴─┴─┴─┴─┴─┘</span><br><span class="line">                              │                            │ │ │ │ │ │ │ │</span><br><span class="line">                              │                            │ │ │ │ │ │ │ └─► Valid</span><br><span class="line">                              │                            │ │ │ │ │ │ └───► Read</span><br><span class="line">                              │                            │ │ │ │ │ └─────► Write</span><br><span class="line">                              │                            │ │ │ │ └───────► Execute</span><br><span class="line">                              │                            │ │ │ └─────────► User</span><br><span class="line">                              │                            │ │ └───────────► Global</span><br><span class="line">                              │                            │ └─────────────► Accessed</span><br><span class="line">                              │                            └───────────────► Dirty</span><br><span class="line">                              │</span><br><span class="line">                              └──► PA2PTE(pa) = (pa &gt;&gt; 12) &lt;&lt; 10</span><br><span class="line">                                   PTE2PA(pte) = (pte &gt;&gt; 10) &lt;&lt; 12</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2025/20251214RISCVPKE%E2%80%94%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/1765876584529.png" alt="1765876584529"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">═══════════════════════════════════════════════════════════════════════════════════</span><br><span class="line">                      三级页表结构 (SV39 Radix Tree)</span><br><span class="line">═══════════════════════════════════════════════════════════════════════════════════</span><br><span class="line">  ┌──────────────────────────────────────────────────────────────────────┐</span><br><span class="line">  │                              satp                                    │</span><br><span class="line">  ├──────────────────────────────────────────────────────────────────────┤</span><br><span class="line">  │  Mode(4) │  ASID(16)  │           PPN(44)：根页表的物理页号             │</span><br><span class="line">  │   8=SV39 │            │                                              │</span><br><span class="line">  └──────────┴────────────┴──────────────────────────────────────────────┘</span><br><span class="line">                                        │  (PPN &lt;&lt; 12) = 根页表物理地址</span><br><span class="line">                                        │              + VPN[2] * sizeof(PDE)</span><br><span class="line">                                        ▼              = 根页表中对应PTE的地址</span><br><span class="line">     Level 2: 页目录 (Page Directory)                    </span><br><span class="line">    ┌───────────────────────────────────────────────────────────────────┐ </span><br><span class="line">    │ Entry 0 │ Entry 1 │ Entry 2 │  ...  │ Entry 510 │ Entry 511       │</span><br><span class="line">    │  (64b)  │  (64b)  │  (64b)  │       │   (64b)   │   (64b)         │</span><br><span class="line">    └────┬────┴─────────┴─────────┴───────┴───────────┴────┬────────────┘</span><br><span class="line">         │                                                 │    512 entries</span><br><span class="line">         │ PTE2PA + VPN[1] * sizeof(PDE)                   │    × 8 bytes</span><br><span class="line">         ▼                                                 ▼    = 4KB (1 page)</span><br><span class="line">     Level 1: 页中间目录 (Page Middle Directory)         </span><br><span class="line">    ┌────────────────────┐                  ┌────────────────────┐</span><br><span class="line">    │ Entry 0 │...│E 511 │ 4KB              │ Entry 0 │...│E 511 │ 4KB</span><br><span class="line">    └────┬────┴───┴──────┘                  └───┬─────┴───┴──────┘</span><br><span class="line">         │                                      │</span><br><span class="line">         │ PTE2PA + VPN[0] * sizeof(PTE)        │ </span><br><span class="line">         ▼                                      ▼</span><br><span class="line">     Level 0: 页表 (Page Table)                         </span><br><span class="line">    ┌────────────────────┐             ┌────────────────────┐</span><br><span class="line">    │ Entry 0 │...│E 511 │ 4KB         │ Entry 0 │...│E 511 │ 4KB</span><br><span class="line">    └────┬────┴───┴──────┘             └─────────┴───┴───┬──┘</span><br><span class="line">         │                                               │</span><br><span class="line">         │ PTE2PA + OFFSET                               │ </span><br><span class="line">         ▼                                               ▼</span><br><span class="line">    ┌─────────┐                                     ┌─────────┐</span><br><span class="line">    │ 物理页   │ 4KB                                 │ 物理页   │ 4KB</span><br><span class="line">    │ (Data)  │                                     │ (Data)  │</span><br><span class="line">    └─────────┘                                     └─────────┘</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>512叉树，根节点是PD。完全512叉树可登记<code>512 * 512 * 512 * 4KB = 512GB</code>的内存空间。根据虚拟地址的实际使用情况，激活对应的节点。</p>
+</blockquote>
+<pre><code>咦？不是说44位PPN可以寻址64PB吗？为甚么这里只能登记512GB？
+</code></pre>
+<p>Sv39只使用了39位虚拟地址，能表示的最大地址空间确实是<code>2^39 = 512GB</code>。实际可用的虚拟地址空间仅限于512GB。我们还要弄清：</p>
+<pre><code>PD只有一个吗？
+</code></pre>
+<p>不是。每个进程都有自己的页表（包括PD、PMD、PT），包括内核进程也是如此。实际上，进程的PCB中会保存当前进程的<code>satp</code>值，以便在进程切换时加载对应的页表。</p>
+<pre><code>这么多PD，会发生页框冲突吗？
+</code></pre>
+<p>冲突避免是由PMM模块负责的。不过，不同进程有时也会共享某些物理页框，比如fork出来的子进程会共享父进程的代码段页框。</p>
+<blockquote>
+<p>内核进程为什么也有自己的页表？内核进程不是访问物理内存吗？</p>
+</blockquote>
+<p>现代CPU中为了加速地址转换以及检验访问权限，有单独的硬件模块<code>MMU</code>（Memory Management Unit，内存管理单元）负责。CPU 发出的每一条访存指令，地址都会被 <code>MMU</code> 拦截并进行查表翻译，并不会区分“现在是内核在跑”还是“现在是用户在跑”。前面也提到，在S态初始化页表以后，更改satp值来启用分页。如果要让内核使用物理地址，就必须在每次陷入内核（系统调用&#x2F;中断）时关闭 MMU，退出时再打开。这在性能上是灾难性的，因为<strong>关闭&#x2F;开启 MMU 会清空流水线和TLB缓存</strong>。</p>
+<p>另一方面，内核进程也会出现“<code>多进程</code>”，比如同时发生多个中断处理程序。又比如，<code>多核</code>CPU中，每个核上都运行着内核进程，这些内核进程之间也需要隔离。</p>
+<p>最后，更需要指出的是，页表不仅仅用于地址翻译，还包含权限位（R&#x2F;W&#x2F;X）。通过页表，可以将内核代码段设为“只读”。如果低调的黑客试图用野指针修改代码段，CPU 会触发异常，防止系统彻底崩溃或被篡改。早期DOS系统采用实模式没有页表，内核代码段缺乏保护，你甚至可以修改键盘中断向量来修改按键，比如说按下<code>S</code>键输出<code>B</code>。</p>
+<h2 id="内核进程页表"><a href="#内核进程页表" class="headerlink" title="内核进程页表"></a>内核进程页表</h2><p>实际上，在内核进程的页表创建前，我们已经在使用内存了。毕竟，没有内核代码，又怎么创建页表呢？但在用户态进程运行前，我们必须创建内核进程的页表，分配号页框，并将内核代码段、数据段映射进去，才能让用户态进程正常运行。</p>
+<p>所以我们要做的是给内核<code>补票</code>。</p>
+<p>仔细回想，在pmm阶段，我们刚刚初始化了空闲页框链表<code>g_free_mem_list</code>，那么，</p>
+<pre><code>第一个被分配出去的页框用来做什么呢？
+</code></pre>
+<p>是的，正是作为内核进程的顶级页表PD。</p>
+<pre><code>内核进程的页表要登记哪些区域呢？
+</code></pre>
+<p>对本实验来说看，将</p>
+<p><code>[KERNEL_BASE, KERNEL_BASE + PKE_MAX_ALLOWABLE_RAM)</code></p>
+<p>↕ 映射为</p>
+<p><code>[DRAM_BASE, DRAM_BASE + PKE_MAX_ALLOWABLE_RAM)</code></p>
+<blockquote>
+<p>显然，PKE_MAX_ALLOWABLE_RAM不会超过2^39。</p>
+</blockquote>
+<p>这段区域分成两段：</p>
+<ul>
+<li><p>内核代码段：</p>
+<ul>
+<li>虚拟地址：<code>[KERNEL_BASE, KERNEL_BASE + text_size)</code></li>
+<li>物理地址：<code>[DRAM_BASE, DRAM_BASE + text_size)</code></li>
+<li>权限：<code>RWX=101</code>，只读且可执行，不可写</li>
+</ul>
+</li>
+<li><p>内核数据段+堆+栈+剩余内存：</p>
+<ul>
+<li>虚拟地址：<code>[KERNEL_BASE + text_size, KERNEL_BASE + PKE_MAX_ALLOWABLE_RAM)</code></li>
+<li>物理地址：<code>[DRAM_BASE + text_size, DRAM_BASE + PKE_MAX_ALLOWABLE_RAM)</code></li>
+<li>权限：<code>RWX=110</code>，可读可写，不可执行</li>
+</ul>
+<p>  不对呀，你把所有RAM都映射进去了，我用户进程还能用啥？</p>
+</li>
+</ul>
+<p>内核进程是所有用户进程的<code>监护人</code>，监护人需要随时访问用户进程的内存空间，因此需要映射所有物理内存。</p>
+<pre><code>内存都设成了不可执行，我用户进程代码咋跑吗？
+</code></pre>
+<p>内核进程页表只负责内核态的地址转换和访问控制，用户态的地址转换和访问控制由用户进程自己的页表负责。具体来说，用户进程运行时，<code>satp</code>会被切换为用户进程的PD，自然会按照用户进程页表中的权限来访问内存。而且，PTE中的U位会被设置为1，表示用户态。</p>
+<pre><code>那用户进程页表会把内核代码段映射进去吗？
+</code></pre>
+<p>不会。用户进程页表只会映射alloc_page()分配的页框，自然不会包括内核代码段所在的页框。</p>
+<pre><code>内核不能跑一跑用户进程的代码段吗？
+</code></pre>
+<p>内核代码注入了解一下。<code>W^X</code>（Write XOR Execute）原则要求内存页要么可写，要么可执行，但不能同时具备这两种权限。这样可以防止恶意代码注入攻击，提高系统安全性。</p>
+<blockquote>
+<p>👶进程会有叛逆期吗？会需要自己的隐私吗？</p>
+</blockquote>
+<h2 id="用户进程页表"><a href="#用户进程页表" class="headerlink" title="用户进程页表"></a>用户进程页表</h2><p>pmm和vmm模块初始化完成后，我们就可以enable分页，并切换到用户态运行用户进程了。</p>
+<pre><code>用户进程怎么创建呢？
+</code></pre>
+<p>思路1：直接创建</p>
+<p>思路2：现代Linux风格的<code>fork + exec</code>创建</p>
+<pre><code>思路2是什么说法？
+</code></pre>
+<p>fork一开始是为多核并行处理设计的。假设有两个CPU核，核A运行进程A，核B运行进程B。现在核A想创建一个新进程C，并让核B运行它。最简单的方式是，核A创建进程C的PCB和页表，然后将进程C的PCB放入就绪队列，等待核B调度运行。</p>
+<p>UNIX初期，系统仅有两个固定的 shell 进程，例如：终端用户输入<code>ls</code>命令后，该终端对应的shell进程会自己执行磁盘I&#x2F;O操作，将<code>ls</code>程序的代码和数据从磁盘载入内存，直接覆盖掉自己所在的代码区域。ls命令运行完毕后，其退出逻辑会再次执行磁盘I&#x2F;O，将shell程序的代码重新载入内存，恢复shell界面。</p>
+<blockquote>
+<p>是的，这个时期还没有虚拟内存，内存管理非常原始，所有进程共享同一块物理内存区域。</p>
+</blockquote>
+<p>这是<code>exec</code>的雏形，但新程序直接覆盖当前shell进程的内存空间。Shell进程被覆盖销毁，执行完命令需重新加载。频繁磁盘I&#x2F;O导致系统响应缓慢，更难受的是Shell状态无法保持，无法实现复杂交互，比如管道、重定向等。</p>
+<p>很自然有人想到Save-Load：将shell进程暂时交换到磁盘上保存起来。</p>
+<blockquote>
+<p>听起来是不是很熟悉？没错，这就是<code>swap</code>的思想源头。现代swap机制将交换的粒度从整个进程细化到内存页，并与虚拟内存技术深度融合，成为现代操作系统内存管理的基石 。</p>
+</blockquote>
+<p>为此，需要先复制一个shell进程的副本，然后让命令程序去覆盖这个副本进程。这个“复制当前进程”的操作，就是系统调用 fork的核心思想。</p>
+<p>fork的核心理念——复制当前进程——被引入，但其初始目的非常单纯：为 exec准备一个“牺牲品”进程。</p>
+<p>但是，频繁的I&#x2F;O操作依然是个大问题。</p>
+<p>那就想办法减少I&#x2F;O操作吧。</p>
+<p>有人观察到：子进程不一定会完全覆盖父进程的内存空间，这部分区域并不需要Save-Load。</p>
+<p>有人提出了<code>写时复制</code>（Copy-On-Write，COW）技术：fork时不立即复制整个进程的内存空间，而是先共享父进程的内存页，并将这些页标记为只读。当子进程或父进程尝试写入这些共享页时，才触发页错误异常，操作系统捕获该异常后，才为该页分配一个新的物理页，并将数据复制过去，然后更新页表，将该页标记为可写。这样，大大减少了不必要的内存复制和I&#x2F;O操作，提高了系统性能。</p>
+<pre><code>这样做会错用父进程的数据吗？
+</code></pre>
+<ul>
+<li>代码段和数据段：如果两个进程不同，代码段和数据段自然不同，那么在加载ELF文件时就会执行写操作，触发<code>COW</code>机制。</li>
+<li>堆和栈：堆和栈一开始是空的，只有在进程运行时才会写入数据，触发<code>COW</code>机制。</li>
+</ul>
+<p>当然，防君子不防小人，如果恶意进程试图通过野指针访问父进程的数据，早期Unix系统是无法防范的。这个任务要交给上述的后来的<code>内存保护</code>机制去解决了。</p>
+<p>就这样，从“交换”到“复制”，再到“写时复制”，内存管理技术不断演进。虽然现在内存已经足够大，更有虚拟内存技术，但<code>fork + exec</code>的设计理念依然被现代操作系统广泛采用，因为它高效且灵活，能够满足多样化的进程创建需求。</p>
+<h2 id="虚拟内存下的ELF加载"><a href="#虚拟内存下的ELF加载" class="headerlink" title="虚拟内存下的ELF加载"></a>虚拟内存下的ELF加载</h2><p>实验一Bare模式下，我们在<code>kernel.lds</code>中将内核代码段和数据段规划在<code>0x8000_0000 - 0x8100_0000</code>这段内存中，而在<code>user.lds</code>中将用户进程的代码段和数据段规划到<code>0x8100_0000 - 0x8800_0000</code>这段内存中。这样，我们可以很方便的直接将用户进程的代码段和数据段加载到物理内存中对应的地址，然后跳转到入口开始执行用户进程。</p>
+<p>在启用虚拟内存后，我们就不需要再使用<code>user.lds</code>。ELF加载显然在S态内核中完成，但在加载ELF之前，我们需要：</p>
+<ol>
+<li><p>创建用户进程的页表<code>PD</code>。</p>
+</li>
+<li><p>分配页框，用于用户进程的<code>trapframe</code>。</p>
+</li>
+<li><p>分配页框，用于用户进程的<code>内核栈</code>。</p>
+</li>
+<li><p>分配页框，用于用户进程的<code>用户栈</code>。</p>
+<p> 2、3、4需要登记到进程PD吗？</p>
+</li>
+</ol>
+<p><code>用户栈</code>登记到进程PD容易理解，申请了什么材料得登记在案嘛，而且还要设置<code>U</code>位和<code>R/W</code>位。</p>
+<p><code>内核栈</code>只在把<code>kernel_sp</code>从 trapframe 取出后才被实际使用，当 CPU 真正开始往内核栈压栈或读写数据时，页表已经切换到内核页表了。从安全角度看，用户页表不映射内核栈可以防止用户态恶意代码攻击内核数据。</p>
+<p><code>trapframe</code>呢？</p>
+<p>这个问题的关键是：</p>
+<pre><code>用户进程需要访问`trapframe`吗？
+</code></pre>
+<p>回想一下trapframe的作用：保存用户进程从用户态切换到内核态时的寄存器状态，以便在返回用户态时恢复。字段包括通用寄存器、程序计数器（PC）、中断处理程序的栈指针，以及本实验中新增的<code>kernel_satp</code>寄存器等。</p>
+<p>用户进程本身似乎并不需要直接访问trapframe。</p>
+<pre><code>但仔细想想，trap时，satp何时切换的？
+</code></pre>
+<p>保存现场时，内核会将当前satp写为trapframe中暂存的kernel_satp值，。那么，trap触发后，satp切换前，</p>
+<pre><code>页表是谁的？
+</code></pre>
+<p>satp还没切换回来，自然还是用户进程的页表。也就是说，这个窗口期内，虽然CPU 已经处于 S-Mode，但环境（页表）还是旧的用户环境。</p>
+<p>这个窗口期内，我们需要访问trapframe中的satp值以及kernel_sp等，那么，trapframe 的虚拟地址必须在用户页表中有效。否则，保存寄存器的指令会触发缺页异常（Page Fault），</p>
+<pre><code>那我换个思路，把 trapframe 内容登记在内核页表里呢？先切换 satp 到内核页表，再保存到trapframe寄存器不就行了？
+</code></pre>
+<p>让我们理一理：</p>
+<ul>
+<li>切换页表需要修改 satp 寄存器。</li>
+<li>修改 satp 需要先从某个地方读出旧的 kernel_satp 值。这个地址存在哪？通常存在 trapframe 结构体的某个字段里。</li>
+<li>读trapframe，要用到sscratch寄存器。在进入用户态前，sscratch保存了用户进程的trapframe的地址。</li>
+<li>先用 csrrw a0, sscratch, a0 将 sscratch 的值读到 a0 寄存器中（并将 a0 的值暂存到 sscratch 中，以免破坏现场），这样 a0 就是 trapframe 的地址。</li>
+<li>然后用 lw t0, offset(a0) 读出 trapframe 中的 satp 值到 t0 寄存器中。<ul>
+<li>那么，用户程序原来在 t0 里的数据就永久丢失了，破坏了现场。</li>
+<li>不可行。</li>
+</ul>
+</li>
+<li>lw a0, offset(a0) 不就行了？<ul>
+<li>这样做会破坏 a0 寄存器的值，用户进程的trapframe丢了…</li>
+<li>不可行。</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>那我不存到trapframe里，把satp值存在内核空间某个固定的内存地址呢？</p>
+</blockquote>
+<p>仔细一想，又是个蛋生鸡的问题：</p>
+<ol start="0">
+<li>假设把satp 的值存在 0x80001000 处。</li>
+<li>CPU 运行在用户态，satp 指向用户页表。</li>
+<li>Trap 发生了，你想去读 0x80001000处的satp 值切换页表。</li>
+<li>不对呀，0x80001000不在我的用户页表里啊！</li>
+</ol>
+<p>所以，trapframe 还是得登记在用户页表里。</p>
+<p>问题终于想通了。我们终于可以加载ELF文件了。🥲</p>
+<p>好在剩下的都是简单的了。</p>
+<ul>
+<li>根据PT_LOAD段的信息，alloc_page()分配页框</li>
+<li>将段内容加载到页框中</li>
+<li>将这些页框登记到用户进程的页表PD中</li>
+<li>设置合适的权限位（R&#x2F;W&#x2F;X&#x2F;U）</li>
+</ul>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-14</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约8879个字, 29分钟35秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20RISCV%E4%BB%A3%E7%90%86%E5%86%85%E6%A0%B8%E5%AE%9E%E9%AA%8C(%E4%BA%94)%EF%BC%9A%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%0Ahttps://potatoshred.github.io/2025/20251214RISCVPKE%E2%80%94%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20251213RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E4%B8%80%EF%BC%9A%E6%8C%91%E6%88%981/" title="RISCV代理内核实验：系统调用、异常和外部中断（四）lab1_challenge1：打印用户程序调用栈">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
+    clientID: 'Ov23liukNOj2CUn7q94O',
+    clientSecret: '07f36f4b11607176041cec83da81621ad7c97643',
+    repo: 'potatoshred.github.io',      // The repository of store comments,
+    owner: 'potatoshred',
+    admin: ['potatoshred'],
+    id: 'RISCV代理内核实验(五)：内存管理',      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+})
+gitalk.render('gitalk_container')</script></div></div></div></div><script src="/js/darkLightToggle.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/add-bookmark.js"></script><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>
