@@ -1,0 +1,109 @@
+<!DOCTYPE html><html lang="zh-CN" id="theme-light-mode"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="pttsrd"><title>RISCV代理内核实验(七)：进程管理 · PTTSRD</title><meta name="description" content="进程管理是操作系统的核心功能之一，负责创建、调度和终止进程。
+我们在内存管理章节提过一些多进程情形下的内存管理问题，分页和虚拟内存的实现就是为了解决多进程内存隔离和内存利用率的问题（以及简化编程）。
+进程的概念进程最早由MULTICS项目的设计者们提出。进程的诞生，标志着操作系统从一个简单的作业调度"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toclist-text">进程的概念</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toclist-text">进程的状态</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%87%E6%8D%A2"><span class="toclist-text">进程的切换</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%94%80%E6%AF%81"><span class="toclist-text">进程的创建与销毁</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E8%B0%83%E5%BA%A6"><span class="toclist-text">进程的调度</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93"><span class="toclist-text">总结</span></a></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toclist-text">进程的概念</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toclist-text">进程的状态</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%87%E6%8D%A2"><span class="toclist-text">进程的切换</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%94%80%E6%AF%81"><span class="toclist-text">进程的创建与销毁</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E8%B0%83%E5%BA%A6"><span class="toclist-text">进程的调度</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93"><span class="toclist-text">总结</span></a></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>RISCV代理内核实验(七)：进程管理</a></h3></div><div class="post-content"><p><p>进程管理是操作系统的核心功能之一，负责创建、调度和终止进程。</p>
+<p>我们在内存管理章节提过一些多进程情形下的内存管理问题，分页和虚拟内存的实现就是为了解决多进程内存隔离和内存利用率的问题（以及简化编程）。</p>
+<h1 id="进程的概念"><a href="#进程的概念" class="headerlink" title="进程的概念"></a>进程的概念</h1><p><code>进程</code>最早由MULTICS项目的设计者们提出。进程的诞生，标志着操作系统从一个简单的作业调度器，向一个复杂的资源管理器和并发执行环境的转变。如今，操作系统以进程为单位分配除CPU外的所有系统资源：内存、文件句柄、I&#x2F;O设备使用权、CPU时间片等。 </p>
+<p>多道程序设计思想和分时系统同时发展，使得多个进程可以并发执行，提升了系统资源的利用率和用户体验。在这一浪潮中，Unix成为了将进程概念发扬光大并推向事实标准的集大成者。随着UNIX及其衍生系统（如Linux、BSD）的广泛传播，其进程模型也成为了绝大多数现代操作系统的设计蓝本。</p>
+<h1 id="进程的状态"><a href="#进程的状态" class="headerlink" title="进程的状态"></a>进程的状态</h1><blockquote>
+<p>状态机是人类试图用数学和逻辑来模拟“智能行为”与“系统控制”的伟大尝试。</p>
+</blockquote>
+<p>进程最基础有三种状态：</p>
+<ul>
+<li>就绪态（Ready）：进程已经准备好运行，但还没有被分配到CPU。</li>
+<li>运行态（Running）：进程正在CPU上执行。</li>
+<li>阻塞态（Blocked）：进程因为等待某个事件（如I&#x2F;O操作完成）而暂停执行。</li>
+</ul>
+<p>此外，还有一些扩展状态：</p>
+<ul>
+<li>新建态（New）：进程正在被创建，还未进入就绪队列。</li>
+<li>终止态（Terminated）：进程已经完成执行，等待系统回收资源。</li>
+</ul>
+<h1 id="进程的切换"><a href="#进程的切换" class="headerlink" title="进程的切换"></a>进程的切换</h1><p>还记得之前process结构体包括哪些内容吗？</p>
+<ul>
+<li>trapframe：保存进程的寄存器状态，包括通用寄存器、程序计数器、satp寄存器等。</li>
+<li>pagetable：进程的页表，用于内存管理。</li>
+<li>kstack：内核栈，用于内核态的函数调用。</li>
+</ul>
+<p>现在，还需要添加上面提到的进程状态字段，以及进程ID（PID）。</p>
+<pre><code>这些字段足够支持进程切换了吗？
+</code></pre>
+<p>当时间片到，或者进程执行<code>yield</code>系统调用主动放弃CPU时，内核会执行以下步骤进行进程切换：</p>
+<ul>
+<li>保存当前进程的寄存器状态到trapframe，更改进程状态为<code>就绪</code>态</li>
+<li>根据调度算法选择下一个进程运行</li>
+<li>加载其trapframe到寄存器，切换页表，更改进程状态为<code>运行</code>态</li>
+<li>返回用户态继续执行。</li>
+</ul>
+<p>似乎，这些字段已经够用了。</p>
+<p>别急，还有其他需求。</p>
+<h1 id="进程的创建与销毁"><a href="#进程的创建与销毁" class="headerlink" title="进程的创建与销毁"></a>进程的创建与销毁</h1><p>内存管理章节提到过，<code>fork + exec</code>的方案优于<code>exec</code>。Linux中，所有的进程都是通过<code>fork</code>1号进程而来，然后通过<code>exec</code>加载新的程序，形成进程树。</p>
+<p><img src="/2025/20251218RISCVPKE%E2%80%94%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/1766068380874.png" alt="htop -t"></p>
+<p>在Linux的shell中，执行<code>htop -t</code>命令，可以看到进程树。根进程是<code>/sbin/init</code>，它是系统启动时创建的第一个用户态进程，PID为1。<code>/sbin/init</code>在现代主流发行版中，通常是指向 <code>systemd​</code> 的符号链接，负责启动和管理完整的用户空间的服务和登录环境。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">$ l /sbin/init                                          </span><br><span class="line">lrwxrwxrwx 1 root root 22 Jul 12 02:52 /sbin/init -&gt; ../lib/systemd/systemd</span><br><span class="line"></span><br><span class="line">$ pstree -T</span><br><span class="line">systemd─┬─NetworkManager</span><br><span class="line">        ├─accounts-daemon</span><br><span class="line">        ├─agetty</span><br><span class="line">        ├─atd</span><br><span class="line">        ├─avahi-daemon───avahi-daemon</span><br><span class="line">        ├─cron</span><br><span class="line">        ...</span><br><span class="line">        ├─init-systemd(Ub─┬─SessionLeader───Relay(870)───zsh───pstree</span><br><span class="line">        │                 ├─SessionLeader───Relay(4097)───zsh───htop</span><br><span class="line">        │                 ├─init</span><br><span class="line">        │                 └─login───zsh</span><br><span class="line">        ...</span><br><span class="line">        ├─systemd-journal</span><br><span class="line">        ├─systemd-logind</span><br><span class="line">        ├─systemd-resolve</span><br><span class="line">        ├─systemd-udevd</span><br><span class="line">        ├─udisksd</span><br><span class="line">        ├─unattended-upgr</span><br><span class="line">        └─wpa_supplicant</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Linux如何设置初始启动进程？<code>/etc/systemd/system/</code>等目录下的服务单元文件（service unit files）定义了系统启动时要运行的服务和进程。<code>systemd</code>会在启动过程中读取这些文件，并根据配置启动相应的进程。</p>
+</blockquote>
+<p>既然是树形结构，那么每个进程都应该有一个父进程（PPID）。我们需要在<code>process</code>结构体中添加<code>parent</code>字段。</p>
+<pre><code>如果父进程终止了，子进程怎么办？
+</code></pre>
+<p>Linux中，子进程会被1号根进程 <code>收养</code>成子进程。子进程会继续在后台运行，直到完成它的任务。</p>
+<blockquote>
+<p>超级加辈</p>
+</blockquote>
+<p>当然，一般情况下，父进程会等待子进程终止，并回收其资源。这是通过<code>wait</code>系统调用实现的。父进程调用<code>wait</code>后，会阻塞直到有一个子进程终止，<code>wait</code>就会立即返回该子进程的<code>PID</code>，然后获取该子进程的退出状态，并释放其资源。</p>
+<pre><code>为什么不是等待所有子进程终止？
+</code></pre>
+<p>因为每个子进程的退出状态（如退出码、是否被信号杀死）都是独立且重要的信息。通过让 <code>wait</code> 一次只返回一个子进程，操作系统可以确保父进程能够精确捕捉到每一个子进程的<code>遗言</code>。如果要等待多个子进程，必须多次调用 wait。</p>
+<p>回到<code>fork</code>，当一个进程调用<code>fork</code>时，内核会执行以下步骤：</p>
+<ul>
+<li>创建一个新的<code>process</code>结构体，分配内核栈和页表</li>
+<li>在子进程的页表中<ul>
+<li>映射与父进程相同的代码段，权限为可读执行、不可写</li>
+<li>复制父进程的数据段和堆栈段到子进程的页表，权限为可读写、不可执行</li>
+</ul>
+</li>
+<li>复制父进程的寄存器状态到子进程的trapframe</li>
+<li>设置子进程的<code>parent</code>字段指向父进程</li>
+<li>将子进程状态设置为<code>就绪</code>态，加入就绪队列</li>
+</ul>
+<p>为了方便实现<code>fork</code>，我们还需要在<code>process</code>结构体中添加段信息，用于描述进程的代码段、数据段和堆栈段的位置、大小和类型等信息。这些信息可以存储在一个数组或链表中，每个元素表示一个段的信息。</p>
+<h1 id="进程的调度"><a href="#进程的调度" class="headerlink" title="进程的调度"></a>进程的调度</h1><p>进程调度是操作系统的核心功能之一，负责决定哪个进程获得CPU时间片。常见的调度算法包括：</p>
+<ul>
+<li>先来先服务（FCFS）</li>
+<li>短作业优先（SJF）</li>
+<li>优先级调度</li>
+<li>时间片轮转（RR）</li>
+<li>多级反馈队列（MLFQ）</li>
+</ul>
+<p>在RISCV代理内核实验中，我们实现了一个简单的时间片轮转调度器。每当时钟中断发生时，调度器会选择下一个就绪态的进程运行。</p>
+<p>在<code>kernel/sched.h</code>中，定义了<code>TIME_SLICE_LEN</code>，表示每个进程的时间片长度。并在process结构体中添加了<code>tick_count</code>字段，用于记录进程已经运行的时间片数。一个时间片为<code>TIMER_INTVAL</code>个<code>CLINT</code>时钟周期。</p>
+<p>在触发时钟软中断时，对当前进程时间片的检查。如果当前进程的<code>tick_count</code>达到<code>TIME_SLICE_LEN</code>，则进行进程切换。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>从以上需求，我们可以总结PCB至少需要包含以下字段：</p>
+<ul>
+<li>进程状态（state）</li>
+<li>进程ID（pid）</li>
+<li>父进程ID（ppid）</li>
+<li>寄存器状态（trapframe）</li>
+<li>页表（pagetable）</li>
+<li>内核栈（kstack）</li>
+<li>时间片计数器（tick_count）</li>
+<li>段信息（mapped_region）</li>
+</ul>
+<p>让我们看看实验里的process结构体定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// the extremely simple definition of process, used for begining labs of PKE</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">process_t</span> &#123;</span></span><br><span class="line">  <span class="comment">// pointing to the stack used in trap handling.</span></span><br><span class="line">  uint64 kstack;</span><br><span class="line">  <span class="comment">// user page table</span></span><br><span class="line">  <span class="type">pagetable_t</span> pagetable;</span><br><span class="line">  <span class="comment">// trapframe storing the context of a (User mode) process.</span></span><br><span class="line">  trapframe* trapframe;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// points to a page that contains mapped_regions. below are added @lab3_1</span></span><br><span class="line">  mapped_region *mapped_info;</span><br><span class="line">  <span class="comment">// next free mapped region in mapped_info</span></span><br><span class="line">  <span class="type">int</span> total_mapped_region;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// heap management</span></span><br><span class="line">  process_heap_manager user_heap;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// process id</span></span><br><span class="line">  uint64 pid;</span><br><span class="line">  <span class="comment">// process status</span></span><br><span class="line">  <span class="type">int</span> status;</span><br><span class="line">  <span class="comment">// parent process</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">process_t</span> *<span class="title">parent</span>;</span></span><br><span class="line">  <span class="comment">// next queue element</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">process_t</span> *<span class="title">queue_next</span>;</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// accounting. added @lab3_3</span></span><br><span class="line">  <span class="type">int</span> tick_count;</span><br><span class="line">&#125;process;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，已经包含了我们总结的字段。除了：</p>
+<ul>
+<li><code>process_heap_manager user_heap;</code>：用于管理进程的堆内存，记录堆的起始地址、大小和分配状态等信息，以便进行动态内存分配和释放，以及边界检查，防止访问了未分配的堆内存区域，比如分配并回收的堆内存碎片。</li>
+<li><code>int total_mapped_region;</code>：用于记录进程映射的内存区域数量，以及下一个可用的映射区域索引，方便内存管理和段信息的维护。</li>
+</ul>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-18</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约2336个字, 7分钟47秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20RISCV%E4%BB%A3%E7%90%86%E5%86%85%E6%A0%B8%E5%AE%9E%E9%AA%8C(%E4%B8%83)%EF%BC%9A%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86%0Ahttps://potatoshred.github.io/2025/20251218RISCVPKE%E2%80%94%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20251216RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E4%BA%8C/" title="RISCV代理内核实验(六)：实验二：虚实地址转换、简单内存分配和回收、简单缺页异常、复杂缺页异常处理">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
+    clientID: 'Ov23liukNOj2CUn7q94O',
+    clientSecret: '07f36f4b11607176041cec83da81621ad7c97643',
+    repo: 'potatoshred.github.io',      // The repository of store comments,
+    owner: 'potatoshred',
+    admin: ['potatoshred'],
+    id: 'RISCV代理内核实验(七)：进程管理',      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+})
+gitalk.render('gitalk_container')</script></div></div></div></div><script src="/js/darkLightToggle.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/add-bookmark.js"></script><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>
