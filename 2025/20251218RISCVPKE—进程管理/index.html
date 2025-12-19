@@ -1,8 +1,10 @@
-<!DOCTYPE html><html lang="zh-CN" id="theme-light-mode"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="pttsrd"><title>RISCV代理内核实验(七)：进程管理 · PTTSRD</title><meta name="description" content="进程管理是操作系统的核心功能之一，负责创建、调度和终止进程。
+<!DOCTYPE html><html lang="zh-CN" id="theme-light-mode"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="pttsrd"><title>RISCV代理内核实验(七)：进程管理 · PTTSRD</title><meta name="description" content="翻过了前面两座大山，迎来的是一座较为平缓的丘陵——进程管理。
+进程管理是操作系统的核心功能之一，负责创建、调度和终止进程。
 我们在内存管理章节提过一些多进程情形下的内存管理问题，分页和虚拟内存的实现就是为了解决多进程内存隔离和内存利用率的问题（以及简化编程）。
-进程的概念进程最早由MULTICS项目的设计者们提出。进程的诞生，标志着操作系统从一个简单的作业调度"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toclist-text">进程的概念</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toclist-text">进程的状态</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%87%E6%8D%A2"><span class="toclist-text">进程的切换</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%94%80%E6%AF%81"><span class="toclist-text">进程的创建与销毁</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E8%B0%83%E5%BA%A6"><span class="toclist-text">进程的调度</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93"><span class="toclist-text">总结</span></a></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toclist-text">进程的概念</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toclist-text">进程的状态</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%87%E6%8D%A2"><span class="toclist-text">进程的切换</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%94%80%E6%AF%81"><span class="toclist-text">进程的创建与销毁</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E8%B0%83%E5%BA%A6"><span class="toclist-text">进程的调度</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93"><span class="toclist-text">总结</span></a></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>RISCV代理内核实验(七)：进程管理</a></h3></div><div class="post-content"><p><p>进程管理是操作系统的核心功能之一，负责创建、调度和终止进程。</p>
+进程的概念进程最早由MULTICS项目"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toclist-text">进程的概念</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toclist-text">进程的状态</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%87%E6%8D%A2"><span class="toclist-text">进程的切换</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%94%80%E6%AF%81"><span class="toclist-text">进程的创建与销毁</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E8%B0%83%E5%BA%A6"><span class="toclist-text">进程的调度</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93"><span class="toclist-text">总结</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E9%99%84%E5%BD%95%EF%BC%9APCB%E7%9A%84%E6%BC%94%E5%8F%98%E5%8E%86%E5%8F%B2"><span class="toclist-text">附录：PCB的演变历史</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E9%BB%8E%E6%98%8E%E4%B9%8B%E5%89%8D%E2%80%94%E2%80%94PCB%E7%9A%84%E5%89%8D%E8%BA%AB%E4%B8%8E%E9%9B%8F%E5%BD%A2-20%E4%B8%96%E7%BA%AA50-60%E5%B9%B4%E4%BB%A3"><span class="toclist-text">黎明之前——PCB的前身与雏形 (20世纪50-60年代)</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%A4%9A%E9%81%93%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E7%9A%84%E5%85%B4%E8%B5%B7%E2%80%94%E2%80%94PCB%E7%9A%84%E5%88%9D%E6%AD%A5%E5%BD%A2%E6%88%90-20%E4%B8%96%E7%BA%AA60-70%E5%B9%B4%E4%BB%A3"><span class="toclist-text">多道程序设计的兴起——PCB的初步形成 (20世纪60-70年代)</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#UNIX%E7%9A%84%E5%93%B2%E5%AD%A6"><span class="toclist-text">UNIX的哲学</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%BE%AE%E5%86%85%E6%A0%B8%E7%9A%84%E6%8C%91%E6%88%98"><span class="toclist-text">微内核的挑战</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%A1%AC%E4%BB%B6%E5%B9%B6%E8%A1%8C%E5%8C%96%E6%B5%AA%E6%BD%AE%E2%80%94%E2%80%94%E4%B8%BA%E5%A4%9A%E6%A0%B8%E6%97%B6%E4%BB%A3%E9%87%8D%E5%A1%91PCB-20%E4%B8%96%E7%BA%AA90%E5%B9%B4%E4%BB%A3%E6%9C%AB%E8%87%B3%E4%BB%8A"><span class="toclist-text">硬件并行化浪潮——为多核时代重塑PCB (20世纪90年代末至今)</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%B2%BE%E7%BB%86%E5%8C%96%E7%AE%A1%E7%90%86%E7%9A%84%E6%97%B6%E4%BB%A3%E2%80%94%E2%80%94%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E7%9A%84PCB%E6%8B%93%E5%B1%95-21%E4%B8%96%E7%BA%AA%E8%87%B3%E4%BB%8A"><span class="toclist-text">精细化管理的时代——现代操作系统的PCB拓展 (21世纪至今)</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%AE%89%E5%85%A8%E5%A2%9E%E5%BC%BA%EF%BC%9A%E5%87%AD%E8%AF%81%E3%80%81%E8%83%BD%E5%8A%9B%E4%B8%8E%E5%AE%89%E5%85%A8%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toclist-text">安全增强：凭证、能力与安全上下文</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E8%B5%84%E6%BA%90%E9%9A%94%E7%A6%BB%E4%B8%8E%E5%AE%B9%E5%99%A8%E5%8C%96%E6%94%AF%E6%8C%81"><span class="toclist-text">资源隔离与容器化支持</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%AE%9E%E6%97%B6%E6%80%A7%E4%B8%8E%E5%B5%8C%E5%85%A5%E5%BC%8F%E9%9C%80%E6%B1%82"><span class="toclist-text">实时性与嵌入式需求</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%85%B6%E4%BB%96%E7%8E%B0%E4%BB%A3%E6%89%A9%E5%B1%95"><span class="toclist-text">其他现代扩展</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%B1%95%E6%9C%9B%E6%9C%AA%E6%9D%A5"><span class="toclist-text">展望未来</span></a></li></ol></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toclist-text">进程的概念</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toclist-text">进程的状态</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%87%E6%8D%A2"><span class="toclist-text">进程的切换</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%88%9B%E5%BB%BA%E4%B8%8E%E9%94%80%E6%AF%81"><span class="toclist-text">进程的创建与销毁</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%BF%9B%E7%A8%8B%E7%9A%84%E8%B0%83%E5%BA%A6"><span class="toclist-text">进程的调度</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E6%80%BB%E7%BB%93"><span class="toclist-text">总结</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E9%99%84%E5%BD%95%EF%BC%9APCB%E7%9A%84%E6%BC%94%E5%8F%98%E5%8E%86%E5%8F%B2"><span class="toclist-text">附录：PCB的演变历史</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E9%BB%8E%E6%98%8E%E4%B9%8B%E5%89%8D%E2%80%94%E2%80%94PCB%E7%9A%84%E5%89%8D%E8%BA%AB%E4%B8%8E%E9%9B%8F%E5%BD%A2-20%E4%B8%96%E7%BA%AA50-60%E5%B9%B4%E4%BB%A3"><span class="toclist-text">黎明之前——PCB的前身与雏形 (20世纪50-60年代)</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%A4%9A%E9%81%93%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E7%9A%84%E5%85%B4%E8%B5%B7%E2%80%94%E2%80%94PCB%E7%9A%84%E5%88%9D%E6%AD%A5%E5%BD%A2%E6%88%90-20%E4%B8%96%E7%BA%AA60-70%E5%B9%B4%E4%BB%A3"><span class="toclist-text">多道程序设计的兴起——PCB的初步形成 (20世纪60-70年代)</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#UNIX%E7%9A%84%E5%93%B2%E5%AD%A6"><span class="toclist-text">UNIX的哲学</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%BE%AE%E5%86%85%E6%A0%B8%E7%9A%84%E6%8C%91%E6%88%98"><span class="toclist-text">微内核的挑战</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%A1%AC%E4%BB%B6%E5%B9%B6%E8%A1%8C%E5%8C%96%E6%B5%AA%E6%BD%AE%E2%80%94%E2%80%94%E4%B8%BA%E5%A4%9A%E6%A0%B8%E6%97%B6%E4%BB%A3%E9%87%8D%E5%A1%91PCB-20%E4%B8%96%E7%BA%AA90%E5%B9%B4%E4%BB%A3%E6%9C%AB%E8%87%B3%E4%BB%8A"><span class="toclist-text">硬件并行化浪潮——为多核时代重塑PCB (20世纪90年代末至今)</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%B2%BE%E7%BB%86%E5%8C%96%E7%AE%A1%E7%90%86%E7%9A%84%E6%97%B6%E4%BB%A3%E2%80%94%E2%80%94%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E7%9A%84PCB%E6%8B%93%E5%B1%95-21%E4%B8%96%E7%BA%AA%E8%87%B3%E4%BB%8A"><span class="toclist-text">精细化管理的时代——现代操作系统的PCB拓展 (21世纪至今)</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E5%AE%89%E5%85%A8%E5%A2%9E%E5%BC%BA%EF%BC%9A%E5%87%AD%E8%AF%81%E3%80%81%E8%83%BD%E5%8A%9B%E4%B8%8E%E5%AE%89%E5%85%A8%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toclist-text">安全增强：凭证、能力与安全上下文</span></a></li><li class="toclist-item toclist-level-3"><a class="toclist-link" href="#%E8%B5%84%E6%BA%90%E9%9A%94%E7%A6%BB%E4%B8%8E%E5%AE%B9%E5%99%A8%E5%8C%96%E6%94%AF%E6%8C%81"><span class="toclist-text">资源隔离与容器化支持</span></a></li></ol></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%AE%9E%E6%97%B6%E6%80%A7%E4%B8%8E%E5%B5%8C%E5%85%A5%E5%BC%8F%E9%9C%80%E6%B1%82"><span class="toclist-text">实时性与嵌入式需求</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%85%B6%E4%BB%96%E7%8E%B0%E4%BB%A3%E6%89%A9%E5%B1%95"><span class="toclist-text">其他现代扩展</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E5%B1%95%E6%9C%9B%E6%9C%AA%E6%9D%A5"><span class="toclist-text">展望未来</span></a></li></ol></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>RISCV代理内核实验(七)：进程管理</a></h3></div><div class="post-content"><p><p>翻过了前面两座大山，迎来的是一座较为平缓的丘陵——进程管理。</p>
+<p>进程管理是操作系统的核心功能之一，负责创建、调度和终止进程。</p>
 <p>我们在内存管理章节提过一些多进程情形下的内存管理问题，分页和虚拟内存的实现就是为了解决多进程内存隔离和内存利用率的问题（以及简化编程）。</p>
-<h1 id="进程的概念"><a href="#进程的概念" class="headerlink" title="进程的概念"></a>进程的概念</h1><p><code>进程</code>最早由MULTICS项目的设计者们提出。进程的诞生，标志着操作系统从一个简单的作业调度器，向一个复杂的资源管理器和并发执行环境的转变。如今，操作系统以进程为单位分配除CPU外的所有系统资源：内存、文件句柄、I&#x2F;O设备使用权、CPU时间片等。 </p>
+<h1 id="进程的概念"><a href="#进程的概念" class="headerlink" title="进程的概念"></a>进程的概念</h1><p><code>进程</code>最早由MULTICS项目的设计者们提出。进程的诞生，标志着操作系统从一个简单的作业调度器，向一个复杂的资源管理器和并发执行环境的转变。如今，操作系统以进程为单位分配除CPU外的所有系统资源：内存、文件句柄、I&#x2F;O设备使用权、CPU时间片等。</p>
 <p>多道程序设计思想和分时系统同时发展，使得多个进程可以并发执行，提升了系统资源的利用率和用户体验。在这一浪潮中，Unix成为了将进程概念发扬光大并推向事实标准的集大成者。随着UNIX及其衍生系统（如Linux、BSD）的广泛传播，其进程模型也成为了绝大多数现代操作系统的设计蓝本。</p>
 <h1 id="进程的状态"><a href="#进程的状态" class="headerlink" title="进程的状态"></a>进程的状态</h1><blockquote>
 <p>状态机是人类试图用数学和逻辑来模拟“智能行为”与“系统控制”的伟大尝试。</p>
@@ -27,46 +29,47 @@
 <p>现在，还需要添加上面提到的进程状态字段，以及进程ID（PID）。</p>
 <pre><code>这些字段足够支持进程切换了吗？
 </code></pre>
-<p>当时间片到，或者进程执行<code>yield</code>系统调用主动放弃CPU时，内核会执行以下步骤进行进程切换：</p>
+<p>当时间片到，或者进程执行 <code>yield</code>系统调用主动放弃CPU时，内核会执行以下步骤进行进程切换：</p>
 <ul>
-<li>保存当前进程的寄存器状态到trapframe，更改进程状态为<code>就绪</code>态</li>
+<li>保存当前进程的寄存器状态到trapframe，更改进程状态为 <code>就绪</code>态</li>
 <li>根据调度算法选择下一个进程运行</li>
-<li>加载其trapframe到寄存器，切换页表，更改进程状态为<code>运行</code>态</li>
+<li>加载其trapframe到寄存器，切换页表，更改进程状态为 <code>运行</code>态</li>
 <li>返回用户态继续执行。</li>
 </ul>
 <p>似乎，这些字段已经够用了。</p>
 <p>别急，还有其他需求。</p>
-<h1 id="进程的创建与销毁"><a href="#进程的创建与销毁" class="headerlink" title="进程的创建与销毁"></a>进程的创建与销毁</h1><p>内存管理章节提到过，<code>fork + exec</code>的方案优于<code>exec</code>。Linux中，所有的进程都是通过<code>fork</code>1号进程而来，然后通过<code>exec</code>加载新的程序，形成进程树。</p>
+<h1 id="进程的创建与销毁"><a href="#进程的创建与销毁" class="headerlink" title="进程的创建与销毁"></a>进程的创建与销毁</h1><p>内存管理章节提到过，<code>fork + exec</code>的方案优于 <code>exec</code>。Linux中，所有的进程都是通过 <code>fork</code>1号进程而来，然后通过 <code>exec</code>加载新的程序，形成进程树。</p>
 <p><img src="/2025/20251218RISCVPKE%E2%80%94%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/1766068380874.png" alt="htop -t"></p>
-<p>在Linux的shell中，执行<code>htop -t</code>命令，可以看到进程树。根进程是<code>/sbin/init</code>，它是系统启动时创建的第一个用户态进程，PID为1。<code>/sbin/init</code>在现代主流发行版中，通常是指向 <code>systemd​</code> 的符号链接，负责启动和管理完整的用户空间的服务和登录环境。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">$ l /sbin/init                                          </span><br><span class="line">lrwxrwxrwx 1 root root 22 Jul 12 02:52 /sbin/init -&gt; ../lib/systemd/systemd</span><br><span class="line"></span><br><span class="line">$ pstree -T</span><br><span class="line">systemd─┬─NetworkManager</span><br><span class="line">        ├─accounts-daemon</span><br><span class="line">        ├─agetty</span><br><span class="line">        ├─atd</span><br><span class="line">        ├─avahi-daemon───avahi-daemon</span><br><span class="line">        ├─cron</span><br><span class="line">        ...</span><br><span class="line">        ├─init-systemd(Ub─┬─SessionLeader───Relay(870)───zsh───pstree</span><br><span class="line">        │                 ├─SessionLeader───Relay(4097)───zsh───htop</span><br><span class="line">        │                 ├─init</span><br><span class="line">        │                 └─login───zsh</span><br><span class="line">        ...</span><br><span class="line">        ├─systemd-journal</span><br><span class="line">        ├─systemd-logind</span><br><span class="line">        ├─systemd-resolve</span><br><span class="line">        ├─systemd-udevd</span><br><span class="line">        ├─udisksd</span><br><span class="line">        ├─unattended-upgr</span><br><span class="line">        └─wpa_supplicant</span><br></pre></td></tr></table></figure>
+<p>在Linux的shell中，执行 <code>htop -t</code>命令，可以看到进程树。根进程是 <code>/sbin/init</code>，它是系统启动时创建的第一个用户态进程，PID为1。<code>/sbin/init</code>在现代主流发行版中，通常是指向 <code>systemd</code> 的符号链接，负责启动和管理完整的用户空间的服务和登录环境。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">$ l /sbin/init                                        </span><br><span class="line">lrwxrwxrwx 1 root root 22 Jul 12 02:52 /sbin/init -&gt; ../lib/systemd/systemd</span><br><span class="line"></span><br><span class="line">$ pstree -T</span><br><span class="line">systemd─┬─NetworkManager</span><br><span class="line">        ├─accounts-daemon</span><br><span class="line">        ├─agetty</span><br><span class="line">        ├─atd</span><br><span class="line">        ├─avahi-daemon───avahi-daemon</span><br><span class="line">        ├─cron</span><br><span class="line">        ...</span><br><span class="line">        ├─init-systemd(Ub─┬─SessionLeader───Relay(870)───zsh───pstree</span><br><span class="line">        │                 ├─SessionLeader───Relay(4097)───zsh───htop</span><br><span class="line">        │                 ├─init</span><br><span class="line">        │                 └─login───zsh</span><br><span class="line">        ...</span><br><span class="line">        ├─systemd-journal</span><br><span class="line">        ├─systemd-logind</span><br><span class="line">        ├─systemd-resolve</span><br><span class="line">        ├─systemd-udevd</span><br><span class="line">        ├─udisksd</span><br><span class="line">        ├─unattended-upgr</span><br><span class="line">        └─wpa_supplicant</span><br></pre></td></tr></table></figure>
+
 <blockquote>
 <p>Linux如何设置初始启动进程？<code>/etc/systemd/system/</code>等目录下的服务单元文件（service unit files）定义了系统启动时要运行的服务和进程。<code>systemd</code>会在启动过程中读取这些文件，并根据配置启动相应的进程。</p>
 </blockquote>
-<p>既然是树形结构，那么每个进程都应该有一个父进程（PPID）。我们需要在<code>process</code>结构体中添加<code>parent</code>字段。</p>
+<p>既然是树形结构，那么每个进程都应该有一个父进程（PPID）。我们需要在 <code>process</code>结构体中添加 <code>parent</code>字段。</p>
 <pre><code>如果父进程终止了，子进程怎么办？
 </code></pre>
 <p>Linux中，子进程会被1号根进程 <code>收养</code>成子进程。子进程会继续在后台运行，直到完成它的任务。</p>
 <blockquote>
 <p>超级加辈</p>
 </blockquote>
-<p>当然，一般情况下，父进程会等待子进程终止，并回收其资源。这是通过<code>wait</code>系统调用实现的。父进程调用<code>wait</code>后，会阻塞直到有一个子进程终止，<code>wait</code>就会立即返回该子进程的<code>PID</code>，然后获取该子进程的退出状态，并释放其资源。</p>
+<p>当然，一般情况下，父进程会等待子进程终止，并回收其资源。这是通过 <code>wait</code>系统调用实现的。父进程调用 <code>wait</code>后，会阻塞直到有一个子进程终止，<code>wait</code>就会立即返回该子进程的 <code>PID</code>，然后获取该子进程的退出状态，并释放其资源。</p>
 <pre><code>为什么不是等待所有子进程终止？
 </code></pre>
-<p>因为每个子进程的退出状态（如退出码、是否被信号杀死）都是独立且重要的信息。通过让 <code>wait</code> 一次只返回一个子进程，操作系统可以确保父进程能够精确捕捉到每一个子进程的<code>遗言</code>。如果要等待多个子进程，必须多次调用 wait。</p>
-<p>回到<code>fork</code>，当一个进程调用<code>fork</code>时，内核会执行以下步骤：</p>
+<p>因为每个子进程的退出状态（如退出码、是否被信号杀死）都是独立且重要的信息。通过让 <code>wait</code> 一次只返回一个子进程，操作系统可以确保父进程能够精确捕捉到每一个子进程的 <code>遗言</code>。如果要等待多个子进程，必须多次调用 wait。</p>
+<p>回到 <code>fork</code>，当一个进程调用 <code>fork</code>时，内核会执行以下步骤：</p>
 <ul>
-<li>创建一个新的<code>process</code>结构体，分配内核栈和页表</li>
+<li>创建一个新的 <code>process</code>结构体，分配内核栈和页表</li>
 <li>在子进程的页表中<ul>
 <li>映射与父进程相同的代码段，权限为可读执行、不可写</li>
 <li>复制父进程的数据段和堆栈段到子进程的页表，权限为可读写、不可执行</li>
 </ul>
 </li>
 <li>复制父进程的寄存器状态到子进程的trapframe</li>
-<li>设置子进程的<code>parent</code>字段指向父进程</li>
-<li>将子进程状态设置为<code>就绪</code>态，加入就绪队列</li>
+<li>设置子进程的 <code>parent</code>字段指向父进程</li>
+<li>将子进程状态设置为 <code>就绪</code>态，加入就绪队列</li>
 </ul>
-<p>为了方便实现<code>fork</code>，我们还需要在<code>process</code>结构体中添加段信息，用于描述进程的代码段、数据段和堆栈段的位置、大小和类型等信息。这些信息可以存储在一个数组或链表中，每个元素表示一个段的信息。</p>
+<p>为了方便实现 <code>fork</code>，我们还需要在 <code>process</code>结构体中添加段信息，用于描述进程的代码段、数据段和堆栈段的位置、大小和类型等信息。这些信息可以存储在一个数组或链表中，每个元素表示一个段的信息。</p>
 <h1 id="进程的调度"><a href="#进程的调度" class="headerlink" title="进程的调度"></a>进程的调度</h1><p>进程调度是操作系统的核心功能之一，负责决定哪个进程获得CPU时间片。常见的调度算法包括：</p>
 <ul>
 <li>先来先服务（FCFS）</li>
@@ -76,8 +79,8 @@
 <li>多级反馈队列（MLFQ）</li>
 </ul>
 <p>在RISCV代理内核实验中，我们实现了一个简单的时间片轮转调度器。每当时钟中断发生时，调度器会选择下一个就绪态的进程运行。</p>
-<p>在<code>kernel/sched.h</code>中，定义了<code>TIME_SLICE_LEN</code>，表示每个进程的时间片长度。并在process结构体中添加了<code>tick_count</code>字段，用于记录进程已经运行的时间片数。一个时间片为<code>TIMER_INTVAL</code>个<code>CLINT</code>时钟周期。</p>
-<p>在触发时钟软中断时，对当前进程时间片的检查。如果当前进程的<code>tick_count</code>达到<code>TIME_SLICE_LEN</code>，则进行进程切换。</p>
+<p>在 <code>kernel/sched.h</code>中，定义了 <code>TIME_SLICE_LEN</code>，表示每个进程的时间片长度。并在process结构体中添加了 <code>tick_count</code>字段，用于记录进程已经运行的时间片数。一个时间片为 <code>TIMER_INTVAL</code>个 <code>CLINT</code>时钟周期。</p>
+<p>在触发时钟软中断时，对当前进程时间片的检查。如果当前进程的 <code>tick_count</code>达到 <code>TIME_SLICE_LEN</code>，则进行进程切换。</p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>从以上需求，我们可以总结PCB至少需要包含以下字段：</p>
 <ul>
 <li>进程状态（state）</li>
@@ -92,12 +95,139 @@
 <p>让我们看看实验里的process结构体定义：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// the extremely simple definition of process, used for begining labs of PKE</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">process_t</span> &#123;</span></span><br><span class="line">  <span class="comment">// pointing to the stack used in trap handling.</span></span><br><span class="line">  uint64 kstack;</span><br><span class="line">  <span class="comment">// user page table</span></span><br><span class="line">  <span class="type">pagetable_t</span> pagetable;</span><br><span class="line">  <span class="comment">// trapframe storing the context of a (User mode) process.</span></span><br><span class="line">  trapframe* trapframe;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// points to a page that contains mapped_regions. below are added @lab3_1</span></span><br><span class="line">  mapped_region *mapped_info;</span><br><span class="line">  <span class="comment">// next free mapped region in mapped_info</span></span><br><span class="line">  <span class="type">int</span> total_mapped_region;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// heap management</span></span><br><span class="line">  process_heap_manager user_heap;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// process id</span></span><br><span class="line">  uint64 pid;</span><br><span class="line">  <span class="comment">// process status</span></span><br><span class="line">  <span class="type">int</span> status;</span><br><span class="line">  <span class="comment">// parent process</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">process_t</span> *<span class="title">parent</span>;</span></span><br><span class="line">  <span class="comment">// next queue element</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">process_t</span> *<span class="title">queue_next</span>;</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// accounting. added @lab3_3</span></span><br><span class="line">  <span class="type">int</span> tick_count;</span><br><span class="line">&#125;process;</span><br></pre></td></tr></table></figure>
 
-<p>可以看到，已经包含了我们总结的字段。除了：</p>
+<p>可以看到，基本已经包含了我们总结的字段。除了：</p>
 <ul>
-<li><code>process_heap_manager user_heap;</code>：用于管理进程的堆内存，记录堆的起始地址、大小和分配状态等信息，以便进行动态内存分配和释放，以及边界检查，防止访问了未分配的堆内存区域，比如分配并回收的堆内存碎片。</li>
+<li><code>process_heap_manager user_heap;</code>：用于管理进程的堆内存，记录堆的起始地址、大小和分配状态等信息，以便进行动态内存分配和释放，以及边界检查，防止访问了未分配的堆内存区域，比如分配并回收的堆内存碎片。我们在上一章的挑战中也有粗糙地实现过。</li>
 <li><code>int total_mapped_region;</code>：用于记录进程映射的内存区域数量，以及下一个可用的映射区域索引，方便内存管理和段信息的维护。</li>
+<li><code>struct process_t *queue_next;</code>：用于将进程组织成队列，便于调度器管理。</li>
 </ul>
-</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-18</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约2336个字, 7分钟47秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20RISCV%E4%BB%A3%E7%90%86%E5%86%85%E6%A0%B8%E5%AE%9E%E9%AA%8C(%E4%B8%83)%EF%BC%9A%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86%0Ahttps://potatoshred.github.io/2025/20251218RISCVPKE%E2%80%94%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20251216RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E4%BA%8C/" title="RISCV代理内核实验(六)：实验二：虚实地址转换、简单内存分配和回收、简单缺页异常、复杂缺页异常处理">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
+<h1 id="附录：PCB的演变历史"><a href="#附录：PCB的演变历史" class="headerlink" title="附录：PCB的演变历史"></a>附录：PCB的演变历史</h1><h2 id="黎明之前——PCB的前身与雏形-20世纪50-60年代"><a href="#黎明之前——PCB的前身与雏形-20世纪50-60年代" class="headerlink" title="黎明之前——PCB的前身与雏形 (20世纪50-60年代)"></a>黎明之前——PCB的前身与雏形 (20世纪50-60年代)</h2><p>早期的计算机系统，特别是批处理系统，以“作业”（Job）为单位执行任务，缺乏并发和交互能力。用户的程序和数据通常以卡片或磁带的形式提交。为了让操作系统能够理解如何运行这个作业，用户需要提供一张或多张“作业控制卡”（<a target="_blank" rel="noopener" href="https://homepage.divms.uiowa.edu/~jones/cards/collection/i-job.shtml">Job Card</a>）。<br><img src="/2024/20240324%E6%90%AD%E5%BB%BA%E8%BF%87%E7%A8%8B/PKE%E2%80%94%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/1766120375800.png" alt="卡内基理工学院计算中心"></p>
+<p>操作系统会根据控制卡信息，在内存的固定区域（通常是操作系统区）创建一个简单的数据结构来管理该作业。其包含的字段极为有限，主要满足最基本的作业执行需求：</p>
+<ul>
+<li>作业标识符（Job ID）：唯一标识该作业。</li>
+<li>作业状态（Job Status）：一个非常简单的状态标记，例如“正在运行”或“已完成”。</li>
+<li>程序起始地址: 指向作业代码在内存中的加载位置。</li>
+<li>资源需求：如时间预估、空间预估、I&#x2F;O设备需求等。</li>
+</ul>
+<p>这个时期的目的很单纯：实现作业的自动化顺序执行，减少人工干预。其字段仅需满足“启动-运行-结束”这一线性流程：</p>
+<ul>
+<li>作业一旦开始运行，其中途无法被打断去运行另一个作业。因此，不需要保存CPU的“上下文”信息。</li>
+<li>作业的内存空间通常是连续且固定的，内存管理相对简单。</li>
+<li>系统中任何时候只有一个用户作业在运行，因此不需要复杂的调度信息（如优先级）、进程间通信机制或详细的进程关系（如父子关系）。</li>
+</ul>
+<h2 id="多道程序设计的兴起——PCB的初步形成-20世纪60-70年代"><a href="#多道程序设计的兴起——PCB的初步形成-20世纪60-70年代" class="headerlink" title="多道程序设计的兴起——PCB的初步形成 (20世纪60-70年代)"></a>多道程序设计的兴起——PCB的初步形成 (20世纪60-70年代)</h2><p><code>多道程序设计</code>和<code>分时系统</code>的出现，是操作系统发展史上的第一次重大革命。为了在单个CPU上实现多个程序“同时”运行的宏观效果，操作系统必须能够在不同程序之间进行快速切换。对程序控制的更高要求，促使PCB的概念逐渐形成。</p>
+<p>这一时期PCB字段的扩展，其核心驱动力是 ‍“并发”‍ 和 ‍“共享”‍。为了让多个进程能并发执行并安全地共享系统资源，PCB必须从一个简单的“作业票据”演变为完整的“进程档案”。</p>
+<ul>
+<li>进程标识符<code>PID</code>：唯一地识别并追踪其生命周期。</li>
+<li>进程状态<code>State</code>：新增了“<code>就绪态</code>”、“<code>运行态</code>”和“<code>阻塞态</code>”等状态，以反映进程的当前执行情况。</li>
+<li>CPU现场字段：<ul>
+<li>通用寄存器：保存进程在被中断时的寄存器值。</li>
+<li>程序计数器<code>PC</code>：指向进程下一条要执行的指令。</li>
+<li>栈指针<code>SP</code>：指向进程的栈顶位置。</li>
+</ul>
+</li>
+<li>调度信息字段：<ul>
+<li>优先级<code>Priority</code>：用于调度算法，决定进程的执行顺序。</li>
+<li>时间片计数器<code>Time Slice Counter</code>：记录进程已使用的CPU时间片。</li>
+<li>链接指针<code>Next/Prev Pointer</code>：用于将PCB组织成队列，便于调度器管理。</li>
+</ul>
+</li>
+<li>内存管理字段：<ul>
+<li>页表或段表指针: 指向进程的内存映射结构。</li>
+<li>内存基址和界限寄存器值：早期的内存分段管理方案中，PCB会记录分配给该进程的内存空间的起始物理地址（基址）和长度（界限）。CPU在执行该进程的指令时，硬件会自动检查每次内存访问是否越界。</li>
+</ul>
+</li>
+<li>资源与统计信息字段：<ul>
+<li>I&#x2F;O状态信息: 记录了分配给进程的I&#x2F;O设备列表（如打开的文件）、指向相关设备表的指针等。</li>
+<li>用户标识符<code>UID</code>&#x2F;组标识符<code>GID</code>：用于权限管理，确保进程只能访问其被授权的资源。</li>
+</ul>
+</li>
+<li>记账信息：记录进程使用的CPU时间、执行的系统调用次数、消耗的资源量等，用于性能分析、计费或资源限制。</li>
+</ul>
+<h2 id="UNIX的哲学"><a href="#UNIX的哲学" class="headerlink" title="UNIX的哲学"></a>UNIX的哲学</h2><p>随着UNIX系统的崛起和微内核架构思想的出现，PCB的设计也开始走向成熟和分化。</p>
+<p>UNIX系统以其强大的进程创建和管理机制（<code>fork()、exec()、wait()</code>)，对PCB的结构提出了新的要求，尤其是在进程关系和通信方面。</p>
+<ul>
+<li>进程家族关系字段：<ul>
+<li>父进程ID<code>PPID</code>：记录创建该进程的父进程的PID。</li>
+<li>子进程列表指针：指向该进程所创建的子进程列表，便于实现进程树结构。</li>
+<li>兄弟进程指针：用于在同一父进程下的兄弟进程之间导航（双向链表）。</li>
+</ul>
+</li>
+<li>信号处理字段：UNIX引入了强大的信号机制作为一种异步的进程间通信和事件通知方式。<ul>
+<li>信号掩码<code>Signal Mask</code>：用于阻塞或允许特定信号的传递。</li>
+<li>信号处理函数表：指向用户定义的信号处理函数指针的数组。</li>
+<li>待处理信号队列：记录了已发送给进程但尚未被处理的信号。</li>
+</ul>
+</li>
+<li>文件系统相关字段的深化：UNIX“一切皆文件”的设计哲学，使得进程与文件系统的关系更加紧密<ul>
+<li>文件描述符表指针<code>File Descriptor Table Pointer</code>：指向进程打开的文件描述符表。</li>
+<li>当前工作目录<code>CWD</code>：记录进程的当前工作目录路径，影响相对路径的解析。</li>
+<li>根目录<code>Root Directory</code>：记录进程的根目录路径（用于chroot等操作），限制进程的文件系统可见范围。</li>
+</ul>
+</li>
+</ul>
+<p>UNIX的两大主要分支——System V和BSD——在PCB设计上也有差别：</p>
+<ul>
+<li>System V强调稳定性和向后兼容，PCB设计相对保守，注重传统的进程管理字段。</li>
+<li>BSD则更注重性能和灵活性，引入了更多高级特性，如轻量级进程（线程）支持，PCB中包含了更多与线程调度和同步相关的字段。</li>
+</ul>
+<p>在IPC方面，System V引入了消息队列、共享内存和信号量等机制，这些都需要在PCB中添加相应的字段来管理IPC资源。而BSD则更倾向于使用套接字和管道等机制，PCB中包含了更多与网络通信相关的字段。</p>
+<h2 id="微内核的挑战"><a href="#微内核的挑战" class="headerlink" title="微内核的挑战"></a>微内核的挑战</h2><p>微内核架构的出现，对传统的、庞大的“单体式”PCB设计提出了挑战。微内核的基本思想是，只在内核空间保留最核心的功能（如进程调度、内存管理、IPC），而将文件系统、设备驱动、网络协议栈等都移到用户空间的服务器进程中去实现。</p>
+<p>这种架构对PCB设计的影响是：</p>
+<ul>
+<li>精简核心PCB：微内核中的PCB只包含最基本的字段，如PID、状态、寄存器状态等，去掉了与文件系统、设备管理等无关的字段。</li>
+<li>用户态服务器：内核PCB中的大量信息，现在被分散到各个用户态服务器中。例如，一个进程打开的文件列表，不再由内核直接管理，而是由用户态的文件系统服务器来维护。该服务器会自己维护一个数据结构，记录哪个进程（通过其内核ID）打开了哪些文件。</li>
+<li>IPC字段：由于微内核高度依赖进程间通信，PCB中增加了更多与IPC相关的字段，如消息队列指针、共享内存段列表等。</li>
+</ul>
+<p>尽管微内核在理论上具有更好的模块化和安全性，但由于其频繁的IPC导致的性能开销，纯微内核系统并未成为主流。然而，它的思想影响了现代混合内核的设计。例如，Windows NT架构就借鉴了微内核的分层和服务进程思想，但为了性能，将图形和窗口系统等关键组件重新移回了内核态。</p>
+<h2 id="硬件并行化浪潮——为多核时代重塑PCB-20世纪90年代末至今"><a href="#硬件并行化浪潮——为多核时代重塑PCB-20世纪90年代末至今" class="headerlink" title="硬件并行化浪潮——为多核时代重塑PCB (20世纪90年代末至今)"></a>硬件并行化浪潮——为多核时代重塑PCB (20世纪90年代末至今)</h2><p>从20世纪90年代末开始，单个CPU的频率提升逐渐遇到瓶颈，对称多处理（Symmetric Multiprocessing, SMP）、多核处理器（Multi-core）以及非均匀内存访问（NUMA）架构相继成为主流。硬件层面的巨变，迫使操作系统内核进行深刻的变革，而作为进程管理核心的PCB，也迎来了又一次大规模的字段扩展。</p>
+<p>在多核普及之前，多线程模型已经出现，它允许一个进程内包含多个并发执行的线程。线程有时被称为“轻量级进程”，因为同一进程下的所有线程共享相同的地址空间、打开的文件等资源，但每个线程拥有自己独立的执行上下文（程序计数器、寄存器集、栈）。线程控制块 (Thread Control Block, <code>TCB</code>) 因此成为PCB的补充，专门用于管理线程的状态和调度信息。PCB的角色从“资源分配单元” 转变为“资源的容器”。</p>
+<blockquote>
+<p>PCB也到了子孙满堂的年纪。</p>
+</blockquote>
+<h2 id="精细化管理的时代——现代操作系统的PCB拓展-21世纪至今"><a href="#精细化管理的时代——现代操作系统的PCB拓展-21世纪至今" class="headerlink" title="精细化管理的时代——现代操作系统的PCB拓展 (21世纪至今)"></a>精细化管理的时代——现代操作系统的PCB拓展 (21世纪至今)</h2><p>进入21世纪，随着云计算、物联网、移动计算的兴起，操作系统面临的需求变得空前多样化和精细化。安全性、资源隔离、实时性、能效等成为了与性能同等重要的设计目标。这驱动PCB向着更加专门化和模块化的方向继续拓展。</p>
+<h3 id="安全增强：凭证、能力与安全上下文"><a href="#安全增强：凭证、能力与安全上下文" class="headerlink" title="安全增强：凭证、能力与安全上下文"></a>安全增强：凭证、能力与安全上下文</h3><ul>
+<li><p>凭证字段：Linux的task_struct中，所有与权限相关的字段（如UID, GID等）被整合进一个独立的cred结构中。PCB中只保留一个指向cred结构的指针。这样做的好处是，当进程权限发生变化（如通过setuid）时，可以高效地创建一个新的cred结构并替换指针，同时还能在多线程间共享凭证，实现写时复制，既安全又高效。</p>
+</li>
+<li><p>能力Capabilities字段：传统上，进程要么是权限为0的超级用户（root），要么是普通用户。这种二元划分过于粗暴。Linux引入了“能力”机制，将超级用户的权限分解为一系列独立的“能力”（如CAP_NET_ADMIN允许配置网络，CAP_SYS_TIME允许修改系统时间）。PCB&#x2F;TCB中需要有字段来记录该线程所拥有的能力集，实现了<code>权限的最小化</code>原则。</p>
+</li>
+<li><p>安全上下文字段：内核在每次访问发生时都会检查安全策略。这需要在PCB中添加字段来记录进程的安全上下文（如SELinux的安全标签），以便内核能够根据这些信息执行访问控制决策。Windows中的Token字段也扮演了类似的角色，包含了用户的SID、组、权限等丰富的安全信息。</p>
+</li>
+</ul>
+<h3 id="资源隔离与容器化支持"><a href="#资源隔离与容器化支持" class="headerlink" title="资源隔离与容器化支持"></a>资源隔离与容器化支持</h3><p>容器技术（如Docker）的革命性成功，很大程度上归功于Linux内核提供的两种强大机制：命名空间（Namespaces）和控制组（Cgroups）。这两种机制的实现，都深度依赖于对PCB（即task_struct）的扩展。</p>
+<ul>
+<li><p>命名空间字段：每个进程可以属于多个命名空间（如PID命名空间、网络命名空间、文件系统命名空间等）。PCB中需要有指向这些命名空间结构的指针，以确保进程在其隔离的环境中运行，看到的资源和其他进程是隔离的。为了实现这一点，Linux在task_struct中增加了一个名为nsproxy的字段，它是一个指针，指向一个包含了该进程所属的各种命名空间（pid_namespace, net_namespace等）指针的结构。当一个容器内的进程查看PID时，它看到的是在其pid_namespace内的ID（如1），而内核通过task_struct可以知道它在主机全局PID空间中的真实ID（如25134）。</p>
+</li>
+<li><p>控制组字段：Cgroups允许对进程组进行资源限制和优先级管理。PCB中需要有指向其所属控制组的指针，以便内核能够根据Cgroup的配置，动态调整进程的资源使用情况。Linux在task_struct中增加了一个名为cgroups的字段，它是一个指向该进程所属控制组层次结构的指针。通过这个字段，内核可以追踪进程所属的各个控制组，并根据Cgroup的配置，动态调整进程的资源使用情况，如CPU时间、内存限制等。</p>
+</li>
+</ul>
+<p>这两个字段的加入，使得PCB不再仅仅描述一个进程，而是描述了一个“在特定隔离环境中、受特定资源限制”的进程。这是PCB为了支撑云计算和微服务架构而进行的最重要的现代扩展之一。</p>
+<h2 id="实时性与嵌入式需求"><a href="#实时性与嵌入式需求" class="headerlink" title="实时性与嵌入式需求"></a>实时性与嵌入式需求</h2><p>虽然通用操作系统（如标准Linux、Windows）本质上不是硬实时系统（即无法严格保证任务在规定时间内完成），但通过补丁（如PREEMPT_RT for Linux）或特殊配置，它们可以满足越来越多的软实时和部分硬实时需求。这要求PCB&#x2F;TCB中包含更精确的时间控制字段。</p>
+<ul>
+<li>调度策略与实时优先级: 实时调度策略（如<code>SCHED_FIFO</code>、<code>SCHED_RR</code>）要求PCB中包含实时优先级字段，以确保实时任务能够优先获得CPU时间片，减少延迟。</li>
+<li>时间约束: 为了支持如EDF（最早截止时间优先）等更高级的实时调度算法，TCB中可能需要增加：<ul>
+<li>Deadline字段：记录任务必须完成的绝对截止时间。</li>
+<li>Period字段：对于周期性任务，记录其周期长度。</li>
+<li>计算时间字段：记录任务在每个周期内允许使用的最大CPU时间。</li>
+</ul>
+</li>
+</ul>
+<h2 id="其他现代扩展"><a href="#其他现代扩展" class="headerlink" title="其他现代扩展"></a>其他现代扩展</h2><ul>
+<li>能效管理字段：随着移动设备和数据中心对能效的关注，PCB&#x2F;TCB中可能包含与能效相关的字段，如动态电压频率调整（DVFS）状态、休眠状态等，以便操作系统根据负载动态调整处理器性能和功耗。</li>
+<li>虚拟化支持: 随着虚拟化技术的普及，PCB&#x2F;TCB中可能包含与虚拟机监控器（Hypervisor）交互的字段，如虚拟CPU状态、嵌套页表指针等，以支持高效的虚拟机调度和资源管理。</li>
+<li>IO调度与优先级: 现代操作系统越来越重视I&#x2F;O性能，PCB&#x2F;TCB中可能包含与I&#x2F;O调度相关的字段，如I&#x2F;O优先级、I&#x2F;O等待队列指针等，以优化磁盘和网络I&#x2F;O的处理。</li>
+</ul>
+<p>这一时期的扩展，其驱动力是 ‍“精细化控制”‍ 与 ‍“场景多样化”‍。现代计算不再是单一的桌面或服务器环境，而是涵盖了从微型嵌入式设备到超大规模云平台的广阔领域。PCB的字段扩展反映了操作系统试图在安全性、资源利用率、实时性、能效等多个维度上，为不同应用场景提供更精细、更可控的运行环境。</p>
+<h2 id="展望未来"><a href="#展望未来" class="headerlink" title="展望未来"></a>展望未来</h2><p>进程控制块（PCB）的演变史，就是一部浓缩的操作系统发展史。从最初仅能满足单道批处理作业顺序执行的简单记录，到为多道程序和分时系统设计的、包含完整CPU上下文的核心调度单元，再到为UNIX进程模型添加的家族关系和信号处理机制，PCB的每一次扩展都源于计算模式的根本性变革。</p>
+<p>进入现代，硬件并行化浪潮（多核、NUMA）重塑了PCB的结构，催生了TCB并引入了复杂的亲和性与内存策略字段。而云计算、容器化、物联网等新兴应用场景，则进一步驱动PCB向着精细化控制的方向演进，加入了命名空间、控制组、增强的安全凭证和实时性支持等关键字段。</p>
+<p>展望未来，我们可以预见PCB的字段仍将继续扩展，其驱动力可能来自以下几个方面：</p>
+<ul>
+<li>异构计算与AI加速: 随着GPU、TPU等专用加速器的广泛应用，PCB&#x2F;TCB可能需要包含与异构计算资源管理相关的字段，如加速器上下文指针、数据传输状态等，以支持高效的任务调度和资源利用。</li>
+<li>Serverless与超轻量级执行单元：Serverless计算模型要求极快的启动速度和极低的资源开销。这可能催生比线程更轻量级的执行单元，其对应的控制块将进一步裁剪，只保留最核心的执行状态，而资源管理则可能完全委托给外部的编排系统。</li>
+<li>量子计算的融合: 虽然尚处早期，但如果未来出现与经典计算融合的混合量子计算系统，操作系统将需要全新的方式来描述和管理“量子进程”。其控制块中可能需要包含量子比特（Qubit）状态、纠缠关系、量子门序列等前所未有的信息。</li>
+</ul>
+<p>（该部分的内容来自metaso深度研究）</p>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-18</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约7355个字, 24分钟31秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20RISCV%E4%BB%A3%E7%90%86%E5%86%85%E6%A0%B8%E5%AE%9E%E9%AA%8C(%E4%B8%83)%EF%BC%9A%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86%0Ahttps://potatoshred.github.io/2025/20251218RISCVPKE%E2%80%94%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2025/20251219RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E4%B8%89/" title="RISCV代理内核实验(八)：实验三：fork、yield、循环轮转调度、wait">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20251216RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E4%BA%8C/" title="RISCV代理内核实验(六)：实验二：虚实地址转换、简单内存分配和回收、简单缺页异常、复杂缺页异常处理">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
     clientID: 'Ov23liukNOj2CUn7q94O',
     clientSecret: '07f36f4b11607176041cec83da81621ad7c97643',
     repo: 'potatoshred.github.io',      // The repository of store comments,
