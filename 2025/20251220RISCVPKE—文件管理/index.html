@@ -1,0 +1,181 @@
+<!DOCTYPE html><html lang="zh-CN" id="theme-light-mode"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="pttsrd"><title>RISCV代理内核实验(九)：文件系统 · PTTSRD</title><meta name="description" content="背景Q：现在你有一堆文件，你打算怎么管理它们？
+A：我拉一个map，key是文件名，value是文件地址和文件大小。如何？
+
+Q：可以，不过，现在你有成千上万个文件，你想寻找去年的某个文件，但是你忘记了准确的文件名，你打算怎么办？或者你从网上下载了一个文件，文件名是火星文，你该怎么办？
+A：我决定把"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%83%8C%E6%99%AF"><span class="toclist-text">背景</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#dentry%E5%92%8Cinode"><span class="toclist-text">dentry和inode</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#super-block"><span class="toclist-text">super_block</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#device"><span class="toclist-text">device</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#file"><span class="toclist-text">file</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#vinode-operation"><span class="toclist-text">vinode operation</span></a></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%83%8C%E6%99%AF"><span class="toclist-text">背景</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#dentry%E5%92%8Cinode"><span class="toclist-text">dentry和inode</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#super-block"><span class="toclist-text">super_block</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#device"><span class="toclist-text">device</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#file"><span class="toclist-text">file</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#vinode-operation"><span class="toclist-text">vinode operation</span></a></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>RISCV代理内核实验(九)：文件系统</a></h3></div><div class="post-content"><p><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>Q：现在你有一堆文件，你打算怎么管理它们？</p>
+<pre><code>A：我拉一个map，key是文件名，value是文件地址和文件大小。如何？
+</code></pre>
+<p>Q：可以，不过，现在你有成千上万个文件，你想寻找去年的某个文件，但是你忘记了准确的文件名，你打算怎么办？或者你从网上下载了一个文件，文件名是火星文，你该怎么办？</p>
+<pre><code>A：我决定把文件按分类存放，比如图片、文档、视频、代码等等，然后再用map存储每个分类下的文件。分类下也会有子分类，比如文档下有工作文档、学习文档、个人文档等等。这样形成了一个树形结构，方便查找，而且解决了命名冲突。树的每个节点用一个数据结构记录该节点的属性，比如节点类型（文件或目录，以及设备）、位置、大小、子节点列表、父节点等。
+
+不过，也不单纯是树形结构，因为有些文件可能会有多个分类标签，比如一个文件既是工作文档又是学习文档，这样就形成了一个有向无环图（DAG）。
+</code></pre>
+<p>Q:有了目录，文件管理方便了。但文件本身不一定能完全存放在连续的扇区里，你打算怎么解决这个问题？</p>
+<pre><code>A:效仿虚拟内存和分页机制，把文件分成若干个块，每个块存放可以不连续，然后用一个索引表记录每个块的位置。这样就可以实现文件的非连续存储了。另外，需要在节点数据结构中记录文件的块信息。
+</code></pre>
+<p>Q：用什么数据结构来实现索引表呢？如果是链表的话，虽然磁盘利用率高，但查找效率低；如果是数组的话，查找效率高，但磁盘利用率低。你打算怎么办？</p>
+<pre><code>A：继续效仿虚拟内存和分页机制，使用多级索引结构。但是需要考虑的是，内存页表天然在内存中，而文件系统的索引表需要存放在磁盘上，访问速度较慢。因此，我们使用了一种折中的方法，称为“混合索引”。具体来说，若干指针中，一部分指向直接块（直接存储数据块的地址），一部分指向间接块（存储指向数据块地址的指针），还有一部分指向双重间接块（存储指向间接块地址的指针）。这样可以在保证查找效率的同时，提高磁盘利用率。
+</code></pre>
+<h1 id="dentry和inode"><a href="#dentry和inode" class="headerlink" title="dentry和inode"></a>dentry和inode</h1><p>到此我们已经有了一个基本的文件系统结构，节点的数据结构包括：</p>
+<ul>
+<li>节点名称<code>name</code></li>
+<li>父节点指针<code>parent</code></li>
+</ul>
+<p><strong>以这两个字段为key，该节点指针为value，可以将所有节点放在一个hash表中，方便查找。</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 本实验的简单实现</span></span><br><span class="line"></span><br><span class="line">                           ┌────────────────────────┐</span><br><span class="line">                           │   vfs_root_dentry      │</span><br><span class="line">                           │  (VFS根目录入口点)       │</span><br><span class="line">                           │   name: <span class="string">&quot;/&quot;</span>            │</span><br><span class="line">                           │   ref:  <span class="number">1</span>              │</span><br><span class="line">                           └────────────┬───────────┘</span><br><span class="line">                                        │</span><br><span class="line">                  ┌─────────────────────┼──────────────────────┐</span><br><span class="line">                  │                     │                      │</span><br><span class="line">       ┌──────────▼──────────┐  ┌───────▼──────────┐  ┌────────▼────────┐</span><br><span class="line">       │   dentry_1          │  │   dentry_2       │  │   dentry_3      │</span><br><span class="line">       │   name: <span class="string">&quot;bin&quot;</span>       │  │   name: <span class="string">&quot;home&quot;</span>   │  │   name: <span class="string">&quot;root&quot;</span>  │</span><br><span class="line">       │   parent: root      │  │   parent: root   │  │   parent: root  │</span><br><span class="line">       │   ref: <span class="number">2</span>            │  │   ref: <span class="number">1</span>         │  │   ref: <span class="number">1</span>        │</span><br><span class="line">       └──────────┬──────────┘  └──────┬───────────┘  └──────┬──────────┘</span><br><span class="line">                  │                    │                     │</span><br><span class="line">         ┌────────┴────────┐           │                     │</span><br><span class="line">         │                 │           │                     │</span><br><span class="line">    ┌────▼────┐      ┌─────▼─────┐   ┌─▼───────────┐      ┌──▼─────────┐</span><br><span class="line">    │dentry_  │      │dentry_    │   │dentry_      │      │dentry_     │</span><br><span class="line">    │<span class="number">1.1</span>      │      │<span class="number">1.2</span>        │   │<span class="number">2.1</span>          │      │<span class="number">3.1</span>         │</span><br><span class="line">    │<span class="string">&quot;ls&quot;</span>     │      │<span class="string">&quot;cat&quot;</span>      │   │<span class="string">&quot;user1&quot;</span>      │      │<span class="string">&quot;.bashrc&quot;</span>   │</span><br><span class="line">    │parent:  │      │parent:    │   │parent:      │      │parent:     │</span><br><span class="line">    │dentry_1 │      │dentry_1   │   │dentry_2     │      │dentry_3    │</span><br><span class="line">    │ref: <span class="number">1</span>   │      │ref: <span class="number">1</span>     │   │ref: <span class="number">1</span>       │      │ref: <span class="number">1</span>      │</span><br><span class="line">    └─────────┘      └───────────┘   └─┬──────────┬┘      └────────────┘</span><br><span class="line">                                       │          │</span><br><span class="line">                 ┌─────────────────────┘          └────────┐</span><br><span class="line">                 │                                         │</span><br><span class="line">            ┌────▼───────────────┐                   ┌─────▼────────────┐</span><br><span class="line">            │dentry_2<span class="number">.1</span><span class="number">.1</span>        │                   │dentry_2<span class="number">.1</span><span class="number">.2</span>      │</span><br><span class="line">            │<span class="string">&quot;config&quot;</span>            │                   │<span class="string">&quot;data&quot;</span>            │</span><br><span class="line">            │parent: dentry_2<span class="number">.1</span>  │                   │parent:dentry_2<span class="number">.1</span> │</span><br><span class="line">            │ref: <span class="number">1</span>              │                   │ref: <span class="number">1</span>            │</span><br><span class="line">            └────────────────────┘                   └──────────────────┘</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">查找路径: /home/user1/config</span><br><span class="line"></span><br><span class="line">步骤<span class="number">1</span>: hash_get_dentry(root_dentry, <span class="string">&quot;home&quot;</span>)</span><br><span class="line">        │</span><br><span class="line">        ├─ 计算<span class="built_in">hash</span>值: <span class="built_in">hash</span>(<span class="string">&quot;home&quot;</span>) % <span class="number">100</span> = <span class="number">23</span></span><br><span class="line">        │</span><br><span class="line">        └─ 在<span class="built_in">hash</span>表bucket[<span class="number">23</span>]中查找</span><br><span class="line">             │</span><br><span class="line">             ├─ Key: (root_dentry, <span class="string">&quot;home&quot;</span>) == 匹配 ✓</span><br><span class="line">             │</span><br><span class="line">             └─ 返回: dentry_2(home目录)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">步骤<span class="number">2</span>: hash_get_dentry(dentry_2, <span class="string">&quot;user1&quot;</span>)</span><br><span class="line">        │</span><br><span class="line">        ├─ 计算<span class="built_in">hash</span>值: <span class="built_in">hash</span>(<span class="string">&quot;user1&quot;</span>) % <span class="number">100</span> = <span class="number">45</span></span><br><span class="line">        │</span><br><span class="line">        └─ 在<span class="built_in">hash</span>表bucket[<span class="number">45</span>]中查找</span><br><span class="line">             │</span><br><span class="line">             ├─ Key: (dentry_2, <span class="string">&quot;user1&quot;</span>) == 匹配 ✓</span><br><span class="line">             │</span><br><span class="line">             └─ 返回: dentry_2<span class="number">.1</span>(user1目录)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">步骤<span class="number">3</span>: hash_get_dentry(dentry_2<span class="number">.1</span>, <span class="string">&quot;config&quot;</span>)</span><br><span class="line">        │</span><br><span class="line">        ├─ 计算<span class="built_in">hash</span>值: <span class="built_in">hash</span>(<span class="string">&quot;config&quot;</span>) % <span class="number">100</span> = <span class="number">78</span></span><br><span class="line">        │</span><br><span class="line">        └─ 在<span class="built_in">hash</span>表bucket[<span class="number">78</span>]中查找</span><br><span class="line">             │</span><br><span class="line">             ├─ Key: (dentry_2<span class="number">.1</span>, <span class="string">&quot;config&quot;</span>) == 匹配 ✓</span><br><span class="line">             │</span><br><span class="line">             └─ 返回: dentry_2<span class="number">.1</span><span class="number">.1</span>(config文件)</span><br><span class="line"></span><br><span class="line">   ┌───────────────────────────────────────────────────┐</span><br><span class="line">   │  DENTRY HASH TABLE (MAX_DENTRY_HASH_SIZE = <span class="number">100</span>)   │</span><br><span class="line">   │                                                   │</span><br><span class="line">   │  [<span class="number">0</span>]   →  NULL                                    │</span><br><span class="line">   │  [<span class="number">1</span>]   →  NULL                                    │</span><br><span class="line">   │  ...                                              │</span><br><span class="line">   │  [<span class="number">23</span>]  →  ┌─────────────────────────────┐         │</span><br><span class="line">   │           │ dentry_2 (home)             │         │</span><br><span class="line">   │           │ parent: root_dentry         │         │</span><br><span class="line">   │           │ hash_key: (root, <span class="string">&quot;home&quot;</span>)    │         │</span><br><span class="line">   │           └─────────────────────────────┘         │</span><br><span class="line">   │  ...                                              │</span><br><span class="line">   │  [<span class="number">45</span>]  →  ┌─────────────────────────────┐         │</span><br><span class="line">   │           │ dentry_2<span class="number">.1</span> (user1)          │         │</span><br><span class="line">   │           │ parent: dentry_2            │         │</span><br><span class="line">   │           │ hash_key: (dentry_2,<span class="string">&quot;user1&quot;</span>)│         │</span><br><span class="line">   │           └─────────────────────────────┘         │</span><br><span class="line">   │  ...                                              │</span><br><span class="line">   │  [<span class="number">78</span>]  →  ┌─────────────────────────────┐         │</span><br><span class="line">   │           │ dentry_2<span class="number">.1</span><span class="number">.1</span> (config)       │         │</span><br><span class="line">   │           │ parent: dentry_2<span class="number">.1</span>          │         │</span><br><span class="line">   │           │ hash_key: (dentry_2<span class="number">.1</span>,...)  │         │</span><br><span class="line">   │           └─────────────────────────────┘         │</span><br><span class="line">   │  ...                                              │</span><br><span class="line">   │  [<span class="number">99</span>]  →  NULL                                    │</span><br><span class="line">   └───────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>为了方便文件查找，我们需要尽可能减小结构体的大小。仅需要这两个属性，我们就可以构建一个树形结构。但为了描述文件内容，显然我们还需要更多属性，因此，我们使用指针来引用其他结构体，从而减小主结构体的大小。</p>
+</blockquote>
+<blockquote>
+<p>Linux中，这个主结构体是<code>dentry</code>，它包含了文件名、父节点指针、inode指针等; <code>inode</code>结构体包含了文件的元数据，如权限、大小、块索引等。</p>
+</blockquote>
+<ul>
+<li><code>inode</code>结构体指针<ul>
+<li><code>inum</code>：inode ID</li>
+<li><code>type</code>：节点类型（文件、目录、设备等）</li>
+<li><code>size</code>：文件大小</li>
+<li><code>blocks</code>：文件块数</li>
+<li><code>addrs[DIRECT_BLKNUM]</code>：文件块索引（本实验简略采用直接索引，最大支持10个块）</li>
+</ul>
+</li>
+</ul>
+<h1 id="super-block"><a href="#super-block" class="headerlink" title="super_block"></a>super_block</h1><blockquote>
+<p>我们是不是忘了什么？</p>
+</blockquote>
+<p>内存管理中，可分配页框需要用空闲页框链表记录，那么么，磁盘块的分配呢？</p>
+<p>常用空闲块管理策略：</p>
+<ul>
+<li>空闲文件目录表：用一个表格记录所有空闲块的位置，分配时从表格中取出一个空闲块，释放时将块位置重新加入表格。</li>
+<li>空闲块链表：类似内存页框的空闲链表，使用链表结构记录所有空闲块的位置，分配时从链表头取出一个空闲块，释放时将块位置重新加入链表头。</li>
+<li>位图（Bitmap）：使用一个位图来表示磁盘块的使用情况，每个位对应一个磁盘块，0表示空闲，1表示已使用。分配时扫描位图找到第一个0位，释放时将对应位设置为0。</li>
+</ul>
+<p>还记得为什么内存管理中为什么没采用位图吗？因为分配时需线性扫描位图，O(n) 时间复杂度。那么，文件系统中呢？</p>
+<pre><code>A：文件系统中，如 Linux 的 Ext2/3/4中，位图依然是管理磁盘块（Disk Blocks）和 i 节点（Inodes）的主流方案。位图占用空间较小，适合大规模磁盘块管理。在扫描位图寻找空闲块时，操作系统可以利用 CPU 的位运算指令（如 ffs - find first set）一次性处理 64 个甚至更多位，这种“线性扫描”在 CPU 层面其实飞快，大大提升了扫描效率。此外，位图的崩溃恢复相对于链表等结构更简单，减少了文件系统损坏的风险。
+</code></pre>
+<blockquote>
+<p>在某些追求高性能的文件系统（如 XFS）中，确实放弃了位图，转而使用 B+ 树（Free Space B+Trees） 来管理空闲空间。这更接近内存管理的思路，因为它能快速定位“足够大”的连续空闲空间。</p>
+</blockquote>
+<p>Q: 多个硬盘、或硬盘多个分区的情形怎么管理呢？能不能像内存管理那样，统一到一个大的空间里管理？</p>
+<pre><code>A: 理论上是可以的，但实际操作系统中，通常不会这样做。内存是易失性的，断电即空。而硬盘存的是重要档案。如果你把两块硬盘“统一”成一个 D 盘，其中一块坏了，你可能丢失全部数据。此外，内存直接连接在 CPU 的地址总线上，内存并联（双通道）可以显著提升带宽，但硬盘受限于接口和控制器，普通的简单合并并不会让读写速度翻倍。至于硬盘分区，更是为了兼容不同文件系统和操作系统的需求，以及数据隔离和管理方便。
+</code></pre>
+<p>Q：既然不能合并，那怎么区分一个节点属于哪个硬盘或分区呢？</p>
+<pre><code>A：在节点的数据结构中，增加一个字段，记录该节点所属的硬盘或分区的标识符（如设备号、分区号等）。这样，在访问文件时，可以根据该标识符定位到具体的硬盘或分区，然后进行读写操作。
+</code></pre>
+<p>在Linux中，<code>super_block</code>结构体用于表示文件系统的超级块，包含了文件系统的元数据，如文件系统类型、单块大小、总块数、空闲块位图、以及设备号、分区号等。每个挂载的文件系统都有一个对应的<code>super_block</code>实例，内核通过它来管理不同的文件系统。</p>
+<p><code>dentry</code>和<code>inode</code>结构体中也包含了指向所属<code>super_block</code>的指针。<code>dentry</code> 表示路径名条目，需要知道它属于哪个文件系统（哪个挂载点），以便做路径解析、挂载点判断等。<code>inode</code> 在读写、分配块、更新时间、同步等操作时要调用 super_block 提供的函数和配置信息（块大小、块分配策略、超级块标志等）。否则，还得dentry 通过 parent 指针向上找到根，再从根找到 super_block，效率太低。</p>
+<p>为了快速定位inode，类似dentry的hash表，Linux中也有inode的hash表，key是(inum, super_block指针)，value是inode指针。</p>
+<pre><code>为什么dentry的hash表和inode的hash表是分开的呢？
+</code></pre>
+<p>因为dentry和inode的生命周期不同。dentry是路径名条目，可能会频繁创建和销毁，而inode是物理块的包装，可能会被多个dentry引用。将它们分开管理，可以更灵活地控制缓存和回收策略，提高性能。</p>
+<pre><code>为什么dentry的hash表的key是(父dentry指针, name)，没有包含super_block指针呢？
+</code></pre>
+<p>因为 <code>dentry</code> 描述的是“路径层级关系”，而超级块描述的是“存储设备边界”，一个是逻辑关系，一个是物理边界。<code>dentry</code> 的查找和路径解析主要依赖于父子关系和名称匹配，而不需要直接考虑存储设备的边界。<code>inode</code> 则需要考虑存储设备的边界，因为它涉及到具体的数据块分配和访问。</p>
+<pre><code>`dentry` 和 `inode` 都包含了指向 `super_block` 的指针，不是重复了吗？
+</code></pre>
+<p>孤儿 Inode：一个文件被删除但仍被进程打开时，对应的 dentry 可能已经被销毁或断开连接，但 inode 必须依然知道自己的超级块，以便管理剩余的磁盘块和引用计数。</p>
+<p>性能： 在内核代码中，经常只有 inode 指针，如果每次都要先找 dentry 再找 sb（而且一个 inode 可能对应多个 dentry），性能开销太大。属于用空间换时间的典型例子。</p>
+<pre><code>dentry.super_block 和 dentry.inode.super_block 指向的会是不同的 super_block 吗？
+</code></pre>
+<p>不会.</p>
+<h1 id="device"><a href="#device" class="headerlink" title="device"></a>device</h1><p>本实验简化实现，仅支持单一存储设备，device结构体包含：</p>
+<ul>
+<li>设备号<code>dev_id</code></li>
+<li>设备名<code>dev_name</code></li>
+<li>文件系统类型<code>fs_type</code></li>
+<li>文件系统超级块指针<code>*super_block</code></li>
+</ul>
+<h1 id="file"><a href="#file" class="headerlink" title="file"></a>file</h1><p>虽然<code>dentry</code>和<code>inode</code>可以描述文件的元数据和存储位置，但实际读写文件时，还需要一个<code>file</code>结构体来表示打开的文件句柄。</p>
+<pre><code>为什么？
+</code></pre>
+<p>同一个文件可能会被多个进程同时打开，每个进程对文件的读写位置、权限等可能不同。如果直接使用<code>dentry</code>或<code>inode</code>，就无法区分不同进程对同一文件的操作状态。<code>file</code>结构体包括：</p>
+<ul>
+<li><code>dentry</code>：元数据和存储位置，以供读写操作使用</li>
+<li><code>status</code>：文件状态（打开、关闭等）</li>
+<li><code>mode</code>：文件访问模式（读、写、读写等）</li>
+<li><code>offset</code>：当前读写位置</li>
+</ul>
+<blockquote>
+<p>“一切皆文件”</p>
+</blockquote>
+<p>UNIX最具革命性的思想是“<code>一切皆文件</code>”（Everything is a file）。普通文件、目录，甚至打印机、终端等硬件设备，都被抽象为文件，可以通过统一的系统调用接口（如open(), read(), write(), close()）进行访问。这极大地简化了编程模型，增强了系统的可扩展性。</p>
+<pre><code>设备种类是多样的，不同设备的读写操作可能有很大差异，难道要操作系统负责，为每种设备实现一套读写逻辑吗？
+</code></pre>
+<p>这样显然不现实。设备制造商放不开手脚，操作系统也难以兼容各种设备。所以，还是要把任务化整为零，交给设备驱动程序来完成。操作系统只提供统一的接口和调用机制，具体的读写逻辑由设备驱动实现。</p>
+<p>在<code>inode</code>结构体中，包含了指向文件系统操作函数的指针<code>inode_ops</code>，这些函数由具体的文件系统实现（如ext4、fat32等）提供。这样，操作系统只需调用这些函数指针，而不需要了解具体的实现细节。</p>
+<h1 id="vinode-operation"><a href="#vinode-operation" class="headerlink" title="vinode operation"></a>vinode operation</h1><p>文件系统操作函数包括：</p>
+<table>
+<thead>
+<tr>
+<th>函数名</th>
+<th>功能描述</th>
+<th>返回值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>create</td>
+<td>创建文件</td>
+<td>新创建的dentry指针</td>
+</tr>
+<tr>
+<td>delete</td>
+<td>删除文件</td>
+<td>成功或错误码</td>
+</tr>
+<tr>
+<td>mkdir</td>
+<td>创建目录</td>
+<td>新创建的dentry指针</td>
+</tr>
+<tr>
+<td>rmdir</td>
+<td>删除目录</td>
+<td>成功或错误码</td>
+</tr>
+<tr>
+<td>lookup</td>
+<td>查找子节点</td>
+<td>子节点dentry指针或NULL</td>
+</tr>
+<tr>
+<td>read</td>
+<td>读取文件内容</td>
+<td>读取的字节数或错误码</td>
+</tr>
+<tr>
+<td>write</td>
+<td>写入文件内容</td>
+<td>写入的字节数或错误码</td>
+</tr>
+<tr>
+<td>lseek</td>
+<td>设置文件读写位置</td>
+<td>新的偏移量或错误码</td>
+</tr>
+<tr>
+<td>link</td>
+<td>创建硬链接</td>
+<td>成功或错误码</td>
+</tr>
+<tr>
+<td>unlink</td>
+<td>删除硬链接</td>
+<td>成功或错误码</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody></table>
+<p>将以上函数指针封装在<code>vinode_ops</code>结构体中，并在<code>inode</code>结构体中添加一个指向<code>vinode_ops</code>的指针<code>*inode_ops</code>。这样，不同文件系统可以实现自己的操作函数，并通过<code>inode</code>结构体进行调用。</p>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-20</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约4729个字, 15分钟45秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20RISCV%E4%BB%A3%E7%90%86%E5%86%85%E6%A0%B8%E5%AE%9E%E9%AA%8C(%E4%B9%9D)%EF%BC%9A%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%0Ahttps://potatoshred.github.io/2025/20251220RISCVPKE%E2%80%94%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20251219RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E4%B8%89/" title="RISCV代理内核实验(八)：实验三：fork、yield、循环轮转调度、wait">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
+    clientID: 'Ov23liukNOj2CUn7q94O',
+    clientSecret: '07f36f4b11607176041cec83da81621ad7c97643',
+    repo: 'potatoshred.github.io',      // The repository of store comments,
+    owner: 'potatoshred',
+    admin: ['potatoshred'],
+    id: 'RISCV代理内核实验(九)：文件系统',      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+})
+gitalk.render('gitalk_container')</script></div></div></div></div><script src="/js/darkLightToggle.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/add-bookmark.js"></script><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>

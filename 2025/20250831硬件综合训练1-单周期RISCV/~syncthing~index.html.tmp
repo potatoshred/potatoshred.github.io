@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="zh-CN" id="theme-light-mode"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="pttsrd"><title>硬件综合训练1-单周期RISCV · PTTSRD</title><meta name="description" content="〇、如何开始群里刚发时你有点懵，一时不知从何看起。头歌上给了三份资料，你依次下载了下来：
+
+
+你决定首先观看视频，视频里详细讲了课程要求，重要的包括以下部分：
+
+
+
+
+
+
+
+
+然后你看 2025秋《硬件综合训练》差异化指令任务分配.pdf，找到了自己的 CCAB编号。但是，你不知道 CCAB是啥，那"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E3%80%87%E3%80%81%E5%A6%82%E4%BD%95%E5%BC%80%E5%A7%8B"><span class="toclist-text">〇、如何开始</span></a></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:120px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E3%80%87%E3%80%81%E5%A6%82%E4%BD%95%E5%BC%80%E5%A7%8B"><span class="toclist-text">〇、如何开始</span></a></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>硬件综合训练1-单周期RISCV</a></h3></div><div class="post-content"><p><h1 id="〇、如何开始"><a href="#〇、如何开始" class="headerlink" title="〇、如何开始"></a>〇、如何开始</h1><p>群里刚发时你有点懵，一时不知从何看起。头歌上给了三份资料，你依次下载了下来：</p>
+<img src="1756609256059.png" alt="1756609256059" style="zoom: 50%;" />
+
+<p>你决定首先观看视频，视频里详细讲了<strong>课程要求</strong>，重要的包括以下部分：</p>
+<img src="1756609486014.png" alt="1756609486014" style="zoom:50%;" />
+
+<img src="1756609540349.png" alt="1756609540349" style="zoom: 50%;" />
+
+<img src="1756609566391.png" alt="1756609566391" style="zoom: 50%;" />
+
+<img src="1756609585605.png" alt="1756609585605" style="zoom: 50%;" />
+
+<p>然后你看 <code>2025秋《硬件综合训练》差异化指令任务分配.pdf</code>，找到了自己的 <code>CCAB</code>编号。但是，你不知道 <code>CCAB</code>是啥，那是因为你没看 <code>硬件综合训练课程设计任务书.pdf</code>：</p>
+<blockquote>
+<p>在 CCAB 扩展指令集中支持 2 条 C 类运算指令，1 条 M 类存储指令，1条 B 类分支指令，具体任务每位同学不一样，指令编号详见见公文包中的任务分配；</p>
+</blockquote>
+<img src="1756610649863.png" alt="1756610649863" style="zoom:50%;" />
+
+<p>你觉得既然是拓展任务，那不必一开始就做，做完标准指令集后再回头也不迟。</p>
+<p>好了，现在你打开了 <code>2025秋硬件综合训练课设资料发布包.zip</code>，发现了 <code>cpu21-riscv</code>文件夹内有实验电路模板，你打开模板观察了一下，你知道：空心方块代表你要完成的电路，实心方块是课程提供的模块.</p>
+<p><img src="/2025/20250831%E7%A1%AC%E4%BB%B6%E7%BB%BC%E5%90%88%E8%AE%AD%E7%BB%831-%E5%8D%95%E5%91%A8%E6%9C%9FRISCV/1756615835370.png" alt="1756615835370"></p>
+<p>你看了一下头歌第一关,是<strong>RISC-V单周期CPU</strong>,正好也是第一个电路.</p>
+<img src="1756609102898.png" alt="1756609102898" style="zoom:33%;" />
+
+<p>你打开第一关看了一下，觉得似曾相识，因为组原实验的<strong>MIPS单周期CPU</strong>跟这几乎一样。你开始回忆组员实验内容依稀记得什么R型、J型、I型…还有一堆Excel表格…<br><img src="/2025/20250831%E7%A1%AC%E4%BB%B6%E7%BB%BC%E5%90%88%E8%AE%AD%E7%BB%831-%E5%8D%95%E5%91%A8%E6%9C%9FRISCV/1756616056964.png" alt="1756616056964"></p>
+<p>你决定找一些ppt回顾一下，发现压缩包里有 <code>(6)中央处理器RISC-V v3.0.pptx</code>，你迅速点开，看到了RISC-V指令格式的指令格式，发觉缺少阐述性内容。</p>
+<p>你试图去找课程录屏，没找到。再翻一下压缩包，发现RISC-V指令集手册里包含了riscv中英文手册，以及 <code>RISC-V指令系统.ppt</code>。</p>
+<p>感性告诉你，读手册最为全面和权威；理性告诉你，ppt更容易掌握。</p>
+<p>你打开了ppt，通读一遍，收益匪浅。又打开了中文手册，发现了几张有用的插图：</p>
+<img src="1756617033357.png" alt="1756617033357" style="zoom:67%;" />
+
+<img src="1756617054776.png" alt="1756617054776" style="zoom:67%;" />
+
+<p>你觉得差不多了，你回归任务书，观察并思考基本指令集内容，回忆每条指令的执行过程。</p>
+<img src="1756617306025.png" alt="1756617306025" style="zoom:67%;" />
+
+<p>你打开电路，看到了中间的黑线，你以为是总线，但你发现错了，这是专用数据通路模型。你恍然大悟，怪不得只给了一个Excel表，只要设计硬布线控制器就好，微码、时序啥的都不需要。</p>
+<img src="1756618280833.png" alt="1756618280833" style="zoom:67%;" />
+
+<p>你观察IR黑线上的分叉，上面三个分叉输入到控制器中。紧接着是15-19，你看了下表，知道是代表 <code>rs1</code>，20-24代表rs2，7-11代表 <code>rd</code>，20-31代表I型指令的imm(立即数)，以此类推，下面三个分别是S、B、J型指令的立即数。你知道，rs1、rs2、rd肯定跟寄存器堆文件相连。下面几个立即数呢？你查了下指令手册，I和S的立即数用来参与运算，因此会和ALU相连；B和J的立即数用来跳转的，最后肯定跟PC相关。</p>
+<img src="1756617033357.png" alt="1756617033357" style="zoom:67%;" />
+
+<p>你继续努力，画出来了电路图</p>
+<p><img src="/2025/20250831%E7%A1%AC%E4%BB%B6%E7%BB%BC%E5%90%88%E8%AE%AD%E7%BB%831-%E5%8D%95%E5%91%A8%E6%9C%9FRISCV/1756619020568.png" alt="1756619020568"></p>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-08-31</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-RISV-V-课程设计-组原-CPU/" title="学习 RISV-V 课程设计 组原 CPU">学习 RISV-V 课程设计 组原 CPU </a><span class="leancloud_visitors"></span><span>大约905个字, 3分钟1秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20%E7%A1%AC%E4%BB%B6%E7%BB%BC%E5%90%88%E8%AE%AD%E7%BB%831-%E5%8D%95%E5%91%A8%E6%9C%9FRISCV%0Ahttps://potatoshred.github.io/2025/20250831%E7%A1%AC%E4%BB%B6%E7%BB%BC%E5%90%88%E8%AE%AD%E7%BB%831-%E5%8D%95%E5%91%A8%E6%9C%9FRISCV/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2025/20250916%E5%AE%BF%E8%88%8D%E7%AE%80%E6%98%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%90%AD%E5%BB%BA/" title="宿舍简易服务器搭建">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2024/20240324%E6%90%AD%E5%BB%BA%E8%BF%87%E7%A8%8B/" title="搭建过程">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
+    clientID: 'Ov23liukNOj2CUn7q94O',
+    clientSecret: '07f36f4b11607176041cec83da81621ad7c97643',
+    repo: 'potatoshred.github.io',      // The repository of store comments,
+    owner: 'potatoshred',
+    admin: ['potatoshred'],
+    id: '硬件综合训练1-单周期RISCV',      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+})
+gitalk.render('gitalk_container')</script></div></div></div></div><script src="/js/darkLightToggle.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/add-bookmark.js"></script><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>
