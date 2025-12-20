@@ -2,7 +2,7 @@
 A：我拉一个map，key是文件名，value是文件地址和文件大小。如何？
 
 Q：可以，不过，现在你有成千上万个文件，你想寻找去年的某个文件，但是你忘记了准确的文件名，你打算怎么办？或者你从网上下载了一个文件，文件名是火星文，你该怎么办？
-A：我决定把"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%83%8C%E6%99%AF"><span class="toclist-text">背景</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#dentry%E5%92%8Cinode"><span class="toclist-text">dentry和inode</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#super-block"><span class="toclist-text">super_block</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#device"><span class="toclist-text">device</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#file"><span class="toclist-text">file</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#vinode-operation"><span class="toclist-text">vinode operation</span></a></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%83%8C%E6%99%AF"><span class="toclist-text">背景</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#dentry%E5%92%8Cinode"><span class="toclist-text">dentry和inode</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#super-block"><span class="toclist-text">super_block</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#device"><span class="toclist-text">device</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#file"><span class="toclist-text">file</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#vinode-operation"><span class="toclist-text">vinode operation</span></a></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>RISCV代理内核实验(九)：文件系统</a></h3></div><div class="post-content"><p><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>Q：现在你有一堆文件，你打算怎么管理它们？</p>
+A：我决定把"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%83%8C%E6%99%AF"><span class="toclist-text">背景</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#dentry%E5%92%8Cinode"><span class="toclist-text">dentry和inode</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#super-block"><span class="toclist-text">super_block</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#device"><span class="toclist-text">device</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#file"><span class="toclist-text">file</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#vinode-operation"><span class="toclist-text">vinode operation</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="toclist-text">文件操作</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%9B%AE%E5%BD%95%E6%93%8D%E4%BD%9C"><span class="toclist-text">目录操作</span></a></li></ol></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#mount"><span class="toclist-text">mount</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%8C%82%E8%BD%BD%E4%B8%BA%E6%A0%B9%E7%9B%AE%E5%BD%95"><span class="toclist-text">挂载为根目录</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%8C%82%E8%BD%BD%E4%B8%BA%E5%AD%90%E7%9B%AE%E5%BD%95"><span class="toclist-text">挂载为子目录</span></a></li></ol></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E8%83%8C%E6%99%AF"><span class="toclist-text">背景</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#dentry%E5%92%8Cinode"><span class="toclist-text">dentry和inode</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#super-block"><span class="toclist-text">super_block</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#device"><span class="toclist-text">device</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#file"><span class="toclist-text">file</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#vinode-operation"><span class="toclist-text">vinode operation</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="toclist-text">文件操作</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E7%9B%AE%E5%BD%95%E6%93%8D%E4%BD%9C"><span class="toclist-text">目录操作</span></a></li></ol></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#mount"><span class="toclist-text">mount</span></a><ol class="toclist-child"><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%8C%82%E8%BD%BD%E4%B8%BA%E6%A0%B9%E7%9B%AE%E5%BD%95"><span class="toclist-text">挂载为根目录</span></a></li><li class="toclist-item toclist-level-2"><a class="toclist-link" href="#%E6%8C%82%E8%BD%BD%E4%B8%BA%E5%AD%90%E7%9B%AE%E5%BD%95"><span class="toclist-text">挂载为子目录</span></a></li></ol></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>RISCV代理内核实验(九)：文件系统</a></h3></div><div class="post-content"><p><h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>Q：现在你有一堆文件，你打算怎么管理它们？</p>
 <pre><code>A：我拉一个map，key是文件名，value是文件地址和文件大小。如何？
 </code></pre>
 <p>Q：可以，不过，现在你有成千上万个文件，你想寻找去年的某个文件，但是你忘记了准确的文件名，你打算怎么办？或者你从网上下载了一个文件，文件名是火星文，你该怎么办？</p>
@@ -104,7 +104,7 @@ A：我决定把"><meta name="keywords" content="Blog,博客,Hexo"><meta content
 <p>这样显然不现实。设备制造商放不开手脚，操作系统也难以兼容各种设备。所以，还是要把任务化整为零，交给设备驱动程序来完成。操作系统只提供统一的接口和调用机制，具体的读写逻辑由设备驱动实现。</p>
 <p>在<code>inode</code>结构体中，包含了指向文件系统操作函数的指针<code>inode_ops</code>，这些函数由具体的文件系统实现（如ext4、fat32等）提供。这样，操作系统只需调用这些函数指针，而不需要了解具体的实现细节。</p>
 <h1 id="vinode-operation"><a href="#vinode-operation" class="headerlink" title="vinode operation"></a>vinode operation</h1><p>文件系统操作函数包括：</p>
-<table>
+<h2 id="文件操作"><a href="#文件操作" class="headerlink" title="文件操作"></a>文件操作</h2><table>
 <thead>
 <tr>
 <th>函数名</th>
@@ -123,19 +123,14 @@ A：我决定把"><meta name="keywords" content="Blog,博客,Hexo"><meta content
 <td>成功或错误码</td>
 </tr>
 <tr>
-<td>mkdir</td>
-<td>创建目录</td>
-<td>新创建的dentry指针</td>
+<td>open</td>
+<td>打开文件</td>
+<td>file指针或错误码</td>
 </tr>
 <tr>
-<td>rmdir</td>
-<td>删除目录</td>
+<td>close</td>
+<td>关闭文件</td>
 <td>成功或错误码</td>
-</tr>
-<tr>
-<td>lookup</td>
-<td>查找子节点</td>
-<td>子节点dentry指针或NULL</td>
 </tr>
 <tr>
 <td>read</td>
@@ -168,8 +163,63 @@ A：我决定把"><meta name="keywords" content="Blog,博客,Hexo"><meta content
 <td>…</td>
 </tr>
 </tbody></table>
+<h2 id="目录操作"><a href="#目录操作" class="headerlink" title="目录操作"></a>目录操作</h2><table>
+<thead>
+<tr>
+<th>函数名</th>
+<th>功能描述</th>
+<th>返回值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>mkdir</td>
+<td>创建目录</td>
+<td>新创建的dentry指针</td>
+</tr>
+<tr>
+<td>rmdir</td>
+<td>删除目录</td>
+<td>成功或错误码</td>
+</tr>
+<tr>
+<td>readdir</td>
+<td>读取目录内容</td>
+<td>目录项列表或错误码</td>
+</tr>
+<tr>
+<td>rename</td>
+<td>更改文件名或将文件从一个目录移动到另一个目录</td>
+<td>成功或错误码</td>
+</tr>
+</tbody></table>
 <p>将以上函数指针封装在<code>vinode_ops</code>结构体中，并在<code>inode</code>结构体中添加一个指向<code>vinode_ops</code>的指针<code>*inode_ops</code>。这样，不同文件系统可以实现自己的操作函数，并通过<code>inode</code>结构体进行调用。</p>
-</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-20</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约4729个字, 15分钟45秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20RISCV%E4%BB%A3%E7%90%86%E5%86%85%E6%A0%B8%E5%AE%9E%E9%AA%8C(%E4%B9%9D)%EF%BC%9A%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%0Ahttps://potatoshred.github.io/2025/20251220RISCVPKE%E2%80%94%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20251219RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E4%B8%89/" title="RISCV代理内核实验(八)：实验三：fork、yield、循环轮转调度、wait">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
+<h1 id="mount"><a href="#mount" class="headerlink" title="mount"></a>mount</h1><p>挂载（mount）是将一个文件系统连接到现有的目录树中的过程。通过挂载，可以将不同的存储设备或分区整合到统一的文件系统视图中，用户和应用程序可以通过统一的路径访问不同的文件系统。</p>
+<p>输入：</p>
+<ul>
+<li>设备信息</li>
+<li>挂载点路径：本实验简化实现，除了挂载为根目录外，仅支持将文件系统挂载到根目录下。</li>
+</ul>
+<p><img src="/2024/20240324%E6%90%AD%E5%BB%BA%E8%BF%87%E7%A8%8B/PKE%E2%80%94%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86/1766237783860.png" alt="1766237783860"></p>
+<h2 id="挂载为根目录"><a href="#挂载为根目录" class="headerlink" title="挂载为根目录"></a>挂载为根目录</h2><ul>
+<li>获取device.super_block.root_dentry<ul>
+<li>（该dentry由文件系统初始化时创建，parent指针为NULL，name为”&#x2F;“）</li>
+</ul>
+</li>
+<li>设置<code>vfs_root_dentry</code>指针为此root_dentry</li>
+<li>将此<code>root_dentry</code>加入dentry hash表</li>
+<li>将此<code>root_dentry.inode</code>加入inode hash表</li>
+</ul>
+<h2 id="挂载为子目录"><a href="#挂载为子目录" class="headerlink" title="挂载为子目录"></a>挂载为子目录</h2><ul>
+<li>获取device.super_block.root_dentry<ul>
+<li>即挂载点dentry</li>
+</ul>
+</li>
+<li>将<code>root_dentry.name</code>设置为<code>device.dev_name</code></li>
+<li>将此root_dentry的<code>parent</code>指针设置为<code>vfs_root_dentry</code></li>
+<li>将此<code>root_dentry</code>加入dentry hash表</li>
+<li>将此<code>root_dentry.inode</code>加入inode hash表</li>
+</ul>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-20</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约5066个字, 16分钟53秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20RISCV%E4%BB%A3%E7%90%86%E5%86%85%E6%A0%B8%E5%AE%9E%E9%AA%8C(%E4%B9%9D)%EF%BC%9A%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%0Ahttps://potatoshred.github.io/2025/20251220RISCVPKE%E2%80%94%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2025/20251221RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E5%9B%9B/" title="RISCV代理内核实验(十)：实验四——文件系统：文件、目录文件、硬链接、相对路径">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20251219RISCVPKE%E2%80%94%E5%AE%9E%E9%AA%8C%E4%B8%89/" title="RISCV代理内核实验(八)：实验三：fork、yield、循环轮转调度、wait">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
     clientID: 'Ov23liukNOj2CUn7q94O',
     clientSecret: '07f36f4b11607176041cec83da81621ad7c97643',
     repo: 'potatoshred.github.io',      // The repository of store comments,
