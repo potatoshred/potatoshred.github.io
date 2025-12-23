@@ -1,0 +1,167 @@
+<!DOCTYPE html><html lang="zh-CN" id="theme-light-mode"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><meta name="author" content="pttsrd"><title>qemu入门(一)：常用启动参数 · PTTSRD</title><meta name="description" content="‌基础虚拟机创建最基本的虚拟机只需包含：机器、内存、硬盘。
+
+机器：使用 -machine &amp;lt;machine&amp;gt;指定虚拟机的机器类型，对于riscv64架构，常用的机器类型有：
+
+virt:  virt虚拟机
+spike: spike虚拟机(默认)
+sifive_e: sifive_e虚拟"><meta name="keywords" content="Blog,博客,Hexo"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="renderer" content="webkit"><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.webp"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/blog_basic.css"><link rel="stylesheet" href="/css/font-awesome.min.css"><link rel="stylesheet" href="/css/insight.css"><link rel="stylesheet" href="/css/search.css"><link rel="alternate" type="application/atom+xml" title="ATOM 1.0" href="/atom.xml"><script src="/js/jquery.js"></script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="page-top animated fadeInDown"><div class="nav"><li> <a href="/">首页</a></li><li> <a href="/archives">归档</a></li><li> <a href="/tags">标签</a></li><li> <a href="/about">关于</a></li><li> <a href="/mtv">音乐台</a></li></div><div class="information"><div class="nav_right_btn"><li><a class="fa fa-chevron-left" onclick="window.history.go(-1)"> </a></li><li><a class="fa fa-search" onclick="openWindow();"></a></li><li><a class="fa fa-sun-o" onclick="darkLightToggle();"></a></li></div><div class="avatar"><img src="/images/logo.webp"></div></div></div><div class="toc-container in-page animated fadeInDown"><details class="ltr toc-toggle"><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E2%80%8C%E5%9F%BA%E7%A1%80%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%88%9B%E5%BB%BA"><span class="toclist-text">‌基础虚拟机创建</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E5%86%85%E6%A0%B8"><span class="toclist-text">内核</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E7%BD%91%E7%BB%9C"><span class="toclist-text">网络</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E4%B8%B2%E5%8F%A3"><span class="toclist-text">串口</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E6%98%BE%E7%A4%BA%E5%99%A8%E4%B8%8E%E8%BE%93%E5%85%A5%E8%AE%BE%E5%A4%87"><span class="toclist-text">显示器与输入设备</span></a></li></ol></div></details></div><div class="sidebar animated fadeInDown"><div class="sidebar-top"><div class="logo-title"><div class="title"><img src="/images/logo@2x.webp" style="width:220px;" alt="favicon"><h3 title=""><a href="/">PTTSRD</a></h3><div class="description"><p>随便写写</p></div></div><ul class="social-links"><li><a target="_blank" rel="noopener" href="https://github.com/potatoshred"><i class="fa fa-github"></i></a></li><li><a href="mailto:ruslan2kiev@gmail.com"><i class="fa fa-envelope"></i></a></li></ul></div><div class="toc-container in-sidebar"><details class="ltr" open><summary>目录</summary><div class="tocmenu"><ol class="toclist"><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E2%80%8C%E5%9F%BA%E7%A1%80%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%88%9B%E5%BB%BA"><span class="toclist-text">‌基础虚拟机创建</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E5%86%85%E6%A0%B8"><span class="toclist-text">内核</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E7%BD%91%E7%BB%9C"><span class="toclist-text">网络</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E4%B8%B2%E5%8F%A3"><span class="toclist-text">串口</span></a></li><li class="toclist-item toclist-level-1"><a class="toclist-link" href="#%E6%98%BE%E7%A4%BA%E5%99%A8%E4%B8%8E%E8%BE%93%E5%85%A5%E8%AE%BE%E5%A4%87"><span class="toclist-text">显示器与输入设备</span></a></li></ol></div></details></div></div><div class="footer"><div class="p"> <span> 全站CC-BY-SA-3.0 </span><i class="fa fa-star"></i><span> pttsrd</span></div><div class="by_farbox"><span>Powered by </span><a href="https://hexo.io/zh-cn/" target="_blank">Hexo </a><span> & </span><a href="https://github.com/Lhcfl/hexo-theme-anatolo" target="_blank">Anatolo </a></div><div class="beian"></div></div></div><div class="main"><div class="autopagerize_page_element"><div class="content"><div class="post-page"><div class="post animated fadeInDown"><div class="post-title"><h3><a>qemu入门(一)：常用启动参数</a></h3></div><div class="post-content"><p><h1 id="‌基础虚拟机创建"><a href="#‌基础虚拟机创建" class="headerlink" title="‌基础虚拟机创建"></a>‌基础虚拟机创建</h1><p>最基本的虚拟机只需包含：机器、内存、硬盘。</p>
+<ul>
+<li><p>机器：使用 <code>-machine &lt;machine&gt;</code>指定虚拟机的机器类型，对于<code>riscv64</code>架构，常用的机器类型有：</p>
+<ul>
+<li><code>virt</code>:  virt虚拟机</li>
+<li><code>spike</code>: spike虚拟机(默认)</li>
+<li><code>sifive_e</code>: sifive_e虚拟机</li>
+<li><code>sifive_u</code>: sifive_u虚拟机</li>
+<li><code>none</code>: 无特定机器类型，适用于自定义硬件配置</li>
+</ul>
+</li>
+<li><p>主存：<code>-m &lt;size&gt;</code>指定虚拟机内存大小，例如<code>-m 2048</code>表示分配2GB内存</p>
+</li>
+<li><p>硬盘：<code>-drive file=&lt;file&gt;,if=&lt;interface&gt;,format=&lt;format&gt;</code>更灵活的硬盘配置方式<br>  - <code>&lt;interface&gt;</code>: 硬盘接口类型，如<code>ide</code>、<code>scsi</code>、<code>virtio</code>等<br>  - <code>&lt;format&gt;</code>: 硬盘镜像格式，如<code>raw</code>、<code>qcow2</code>等<br>  - 使用<code>qemu-img</code>命令创建虚拟硬盘镜像文件：<code>qemu-img create [-f fmt] filename [size]</code><br>      - <code>-f fmt</code>：指定镜像格式，如<code>qcow2</code>、<code>raw</code>等<br>          - <code>qcow2</code>：支持快照、压缩等高级功能，推荐使用<br>          - <code>raw</code>：原始格式，性能较好但不支持高级功能</p>
+</li>
+<li><p><code>cpu</code>：<code>qemu-system-riscv64</code>下默认为<code>rv64</code>，默认开启了 RISC-V 的标准指令集组合 GC<code>IMAFDC</code>，可以使用<code>-cpu &lt;cpu-type&gt;</code>指定其他cpu类型</p>
+<ul>
+<li><code>rv64e</code>: 精简版64位RISC-V CPU，适用于嵌入式系统，16 个通用寄存器</li>
+<li><code>rv64i</code>: 基础版64位RISC-V CPU，32 个通用寄存器，支持整数运算指令</li>
+<li><code>xiangshan-nanhu</code>: 由中国科学院计算技术研究研发的高性能RISC-V处理器，适用于高性能计算任务</li>
+</ul>
+</li>
+<li><p><code>smp</code>：默认只有一个cpu核心，可以使用<code>-smp &lt;n&gt;</code>指定cpu核心数。</p>
+<ul>
+<li>完整语法: <code>-smp [cpus=]总数,sockets=插槽数,cores=核心数,threads=线程数</code></li>
+<li>必须满足等式：$总数 &#x3D; sockets \times cores \times threads$。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>配置命令</th>
+<th>虚拟机看到的景象</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong><code>-smp 4</code></strong></td>
+<td>4 颗独立的物理 CPU (4 Sockets, 1 Core&#x2F;Socket)</td>
+</tr>
+<tr>
+<td><strong><code>-smp 4,cores=4</code></strong></td>
+<td>1 颗物理 CPU，内含 4 个核心 (1 Socket, 4 Cores&#x2F;Socket)</td>
+</tr>
+<tr>
+<td><strong><code>-smp 4,cores=2,threads=2</code></strong></td>
+<td>1 颗物理 CPU，2 个核心，每个核心开启了超线程 (Total 4 vCPUs)</td>
+</tr>
+</tbody></table>
+<p>虽然<code>-drive ...,if=virtio</code> 很方便，但高手更倾向于：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">-drive file=test.qcow2,<span class="built_in">id</span>=hd0,format=qcow2 （定义文件）</span><br><span class="line">-device virtio-blk-device,drive=hd0 （定义硬件）</span><br></pre></td></tr></table></figure>
+
+<h1 id="内核"><a href="#内核" class="headerlink" title="内核"></a>内核</h1><ul>
+<li><code>-kernel &lt;file&gt;</code>：直接加载内核镜像文件，省略了引导加载程序的步骤，适用于测试和开发环境<ul>
+<li>需要禁用bios引导：<code>-bios none</code></li>
+</ul>
+</li>
+<li><code>-append &lt;cmdline&gt;</code>：为内核传递命令行参数，例如<code>-append &quot;root=/dev/vda1 console=ttyS0&quot;</code>指定根文件系统和控制台设备</li>
+<li><code>-bios &lt;file&gt;</code>：指定自定义的BIOS固件文件，默认情况下，QEMU会使用内置的BIOS固件<ul>
+<li>对于<code>riscv64</code>架构，可以使用<code>-bios default</code>加载默认的OpenSBI固件，或者指定自定义的OpenSBI固件文件，例如<code>-bios opensbi-riscv64-generic-fw_dynamic.bin</code></li>
+</ul>
+</li>
+<li><code>-boot &lt;order&gt;</code>：指定引导顺序，例如<code>-boot dcn</code>表示先从硬盘（d）引导，再从光驱（c），最后从网络（n）引导<ul>
+<li><code>d</code>：硬盘（drive）</li>
+<li><code>c</code>：光驱（cdrom），需要通过<code>-cdrom &lt;file&gt;</code>指定光驱镜像文件</li>
+<li><code>n</code>：网络（network）</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[ 执行 QEMU 命令 ]</span><br><span class="line">         |</span><br><span class="line">         v</span><br><span class="line">  +------------------+      YES     +-----------------------+</span><br><span class="line">  | 是否有 -kernel?  | -----------&gt; | 直接跳转执行该内核     |</span><br><span class="line">  +------------------+              | (忽略 -boot 顺序)      |</span><br><span class="line">         | NO                       +-----------------------+</span><br><span class="line">         v</span><br><span class="line">  +------------------+              +-----------------------+</span><br><span class="line">  | 加载 -bios 固件  | -----------&gt; | 固件读取 -boot 参数    |</span><br><span class="line">  | (如 OpenSBI/UEFI)|              | 搜索 硬盘/网络/光驱    |</span><br><span class="line">  +------------------+              +-----------------------+</span><br></pre></td></tr></table></figure>
+
+<h1 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h1><ul>
+<li><p><code>-netdev &lt;type&gt;,id=&lt;id&gt;,&lt;options&gt;</code>：配置网络设备</p>
+<ul>
+<li><p><code>&lt;type&gt;</code>：网络设备类型，如</p>
+<ul>
+<li><code>user</code>（用户模式网络）: 默认类型，适合简单的网络需求，原理是通过NAT实现虚拟机与外部网络的通信</li>
+<li><code>bridge</code>（桥接网络）： 允许虚拟机直接连接到宿主机的物理网络，需配置桥接网络，适合需要与局域网其他设备通信的场景</li>
+<li><code>socket</code>（套接字）： 通过UNIX域套接字或TCP套接字实现虚拟机之间的网络通信，适合多台虚拟机互联的场景</li>
+<li><code>tap</code>（TAP设备）： 适合需要更高性能和更复杂网络配置的场景，需在宿主机上创建TAP设备并配置桥接网络</li>
+</ul>
+</li>
+<li><p><code>&lt;id&gt;</code>：网络设备的唯一标识符，如<code>net0</code></p>
+</li>
+<li><p><code>&lt;options&gt;</code>：其他选项，如</p>
+<ul>
+<li><code>hostfwd=tcp::2222-:22</code>表示将宿主机的2222端口转发到虚拟机的22端口</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code>-device &lt;device&gt;,netdev=&lt;id&gt;,&lt;options&gt;</code>：添加网络设备到虚拟机</p>
+<ul>
+<li><code>&lt;device&gt;</code>：网络设备类型，如<code>e1000</code>（Intel E1000网卡）、<code>virtio-net-pci</code>（Virtio网卡）等</li>
+<li><code>netdev=&lt;id&gt;</code>：关联的网络设备标识符</li>
+<li><code>&lt;options&gt;</code>：其他选项，如MAC地址等</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p><code>-netdev</code> 和 <code>-device</code> 是后端与前端的关系。要让虚拟机上网，这两个参数必须成对出现并通过 <code>id</code> 绑定。<code>-device</code> 是插在虚拟机主板上的“物理网卡硬件”，负责将数据包发送到虚拟机的操作系统中。<code>-netdev</code> 负责定义数据包如何从宿主机传出，是连接到虚拟机上的“网线”。 </p>
+</blockquote>
+<ul>
+<li><code>-nic &lt;options&gt;</code>：简化的网络配置方式，相当于同时使用 <code>-netdev</code> 和 <code>-device</code> 参数<ul>
+<li>例如，<code>-nic user,model=virtio-net-pci</code> 相当于：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">-netdev user,id=net0 \</span><br><span class="line">-device virtio-net-pci,netdev=net0</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">+--------------------------------------------------------------+</span><br><span class="line">|                    宿主机 (Windows / x86_64)                  |</span><br><span class="line">|                                                              |</span><br><span class="line">|   +------------------------------------------------------+   |</span><br><span class="line">|   |                  QEMU 进程 (TCG 翻译引擎)              |   |</span><br><span class="line">|   |  (将 RISC-V 指令实时转换为 x86_64 指令并执行)            |   |</span><br><span class="line">|   +----------+----------------------------+--------------+   |</span><br><span class="line">|              |                            |                  |</span><br><span class="line">|      [后端 (Backend)]             [虚拟硬件 (Frontend)]        |</span><br><span class="line">|      (连接到物理机)               (虚拟机内部看到的设备)          |</span><br><span class="line">|              |                            |                  |</span><br><span class="line">|   +----------v----------+      +----------v----------+       |</span><br><span class="line">|   |  -netdev user       | &lt;==&gt; |  -device virtio-net |       |</span><br><span class="line">|   |  (模拟网口/NAT)      |      |  (虚拟机里的网卡)      |       |</span><br><span class="line">|   +---------------------+      +---------------------+       |</span><br><span class="line">|                                                              |</span><br><span class="line">|   +---------------------+      +---------------------+       |</span><br><span class="line">|   |  -drive (File)      | &lt;==&gt; |  -device virtio-blk |       |</span><br><span class="line">|   |  (qcow2/img 文件)    |      |  (虚拟机里的硬盘)     |       |</span><br><span class="line">|   +---------------------+      +---------------------+       |</span><br><span class="line">|                                                              |</span><br><span class="line">|   +---------------------+      +---------------------+       |</span><br><span class="line">|   |  -serial stdio      | &lt;==&gt; |  -device uart/ttyS0 |       |</span><br><span class="line">|   |  (你的终端窗口)       |      |  (虚拟控制台串口)     |       |</span><br><span class="line">|   +---------------------+      +---------------------+       |</span><br><span class="line">|                                                              |</span><br><span class="line">+--------------------------------------------------------------+</span><br></pre></td></tr></table></figure>
+
+<h1 id="串口"><a href="#串口" class="headerlink" title="串口"></a>串口</h1><ul>
+<li><p><code>nographic</code>：总开关，禁用图形界面，使用串口进行交互，适用于服务器环境</p>
+<ul>
+<li>自动启用<code>-serial mon:stdio</code>，将串口和 QEMU 控制台混合输出到标准输入输出。</li>
+</ul>
+</li>
+<li><p><code>-serial &lt;dev&gt;</code>：重定向串口设备</p>
+<ul>
+<li><code>stdio</code>：将串口输出重定向到宿主机的标准输入输出（默认选项）</li>
+<li><code>mon:stdio</code>：将串口输出重定向到宿主机的标准输入输出，并启用QEMU监视器</li>
+<li><code>file:&lt;filename&gt;</code>：将串口输出重定向到指定的文件</li>
+<li><code>tcp:&lt;host&gt;:&lt;port&gt;[,server][,nowait]</code>：开启一个 TCP 服务端，你可以用 Telnet 连上去查看串口输出。<ul>
+<li><code>server</code>：以服务器模式监听指定端口</li>
+<li><code>nowait</code>：不等待客户端连接，立即启动虚拟机</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="显示器与输入设备"><a href="#显示器与输入设备" class="headerlink" title="显示器与输入设备"></a>显示器与输入设备</h1><ul>
+<li><code>-display &lt;type&gt;</code>：指定显示类型<ul>
+<li><code>gtk</code>：使用GTK+图形界面显示虚拟机屏幕</li>
+<li><code>sdl</code>：使用SDL图形界面显示虚拟机屏幕</li>
+<li><code>curses</code>：在终端中使用文本模式显示虚拟机屏幕</li>
+<li><code>none</code>：不显示虚拟机屏幕，适用于无头服务器环境</li>
+</ul>
+</li>
+<li><code>-vga &lt;type&gt;</code>：指定VGA显卡类型<ul>
+<li><code>std</code>：标准VGA显卡，兼容性较好</li>
+<li><code>cirrus</code>：Cirrus Logic VGA显卡，支持更高分辨率</li>
+<li><code>vmware</code>：VMware SVGA-II显卡，适用于虚拟化环境</li>
+<li><code>qxl</code>：QXL显卡，适用于使用SPICE协议的虚拟机</li>
+</ul>
+</li>
+<li><code>-usb</code>：启用USB支持</li>
+<li><code>-device &lt;device&gt;,&lt;options&gt;</code>：添加输入设备<ul>
+<li><code>&lt;device&gt;</code>：输入设备类型，如<code>usb-mouse</code>（USB鼠标）、<code>usb-kbd</code>（USB键盘）等</li>
+<li><code>&lt;options&gt;</code>：其他选项，如设备ID等</li>
+</ul>
+</li>
+</ul>
+</p></div><div class="post-footer"><div class="tip">本文采用CC-BY-SA-3.0协议，转载请注明出处<br>作者: pttsrd</div><div class="meta"><div class="info"><i class="fa fa-sun-o"></i><span class="date">2025-12-23</span><i class="fa fa-tag"></i><a class="tag" href="/tags/学习-操作系统/" title="学习 操作系统">学习 操作系统 </a><span class="leancloud_visitors"></span><span>大约1933个字, 6分钟26秒读完</span></div></div></div></div><div class="share"><div class="evernote"><a class="fa fa-bookmark" href="" onclick="javascript:join_favorite()" ref="sidebar"></a></div><div class="weibo"><a class="fa fa-weibo" href="javascript:void((function(s,d,e){try{}catch(e){}var f='http://service.weibo.com/share/share.php?',u=d.location.href,p=['url=',e(u),'&amp;title=',e(d.title),'&amp;appkey=2924220432'].join('');function a(){if(!window.open([f,p].join(''),'mb',['toolbar=0,status=0,resizable=1,width=620,height=450,left=',(s.width-620)/2,',top=',(s.height-450)/2].join('')))u.href=[f,p].join('');};if(/Firefox/.test(navigator.userAgent)){setTimeout(a,0)}else{a()}})(screen,document,encodeURIComponent));"></a></div><div class="twitter"><a class="fa fa-twitter" target="_blank" rel="noopener" href="http://twitter.com/intent/tweet?text=%E5%88%86%E4%BA%AB%E6%96%87%E7%AB%A0%EF%BC%9A%0A%0APTTSRD%20%C2%B7%20qemu%E5%85%A5%E9%97%A8(%E4%B8%80)%EF%BC%9A%E5%B8%B8%E7%94%A8%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%0Ahttps://potatoshred.github.io/2025/20251222Qemu%E5%85%A5%E9%97%A8/%0A"></a></div></div><div class="pagination"><ul class="clearfix"><li class="pre pagbuttons"><a class="btn" role="navigation" href="/2025/20251222RISCVPKE%E2%80%94lab2_c2/" title="RISCV代理内核实验(13)：lab2_challenge2 堆空间管理singlepageheap">上一篇</a></li><li class="next pagbuttons"><a class="btn" role="navigation" href="/2025/20251222RISCVPKE%E2%80%94lab1_c3/" title="RISCV代理内核实验(12)：lab1_challenge3 multicore多核">下一篇</a></li></ul></div><script src="/js/visitors.js"></script><a id="comments"></a><div id="gitalk_container" style="padding:10px"></div><link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"><script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script><script>const gitalk = new Gitalk({
+    clientID: 'Ov23liukNOj2CUn7q94O',
+    clientSecret: '07f36f4b11607176041cec83da81621ad7c97643',
+    repo: 'potatoshred.github.io',      // The repository of store comments,
+    owner: 'potatoshred',
+    admin: ['potatoshred'],
+    id: 'qemu入门(一)：常用启动参数',      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+})
+gitalk.render('gitalk_container')</script></div></div></div></div><script src="/js/darkLightToggle.js"></script><script src="/js/jquery-migrate-1.2.1.min.js"></script><script src="/js/jquery.appear.js"></script><script src="/js/add-bookmark.js"></script><script>(function(window){var INSIGHT_CONFIG={TRANSLATION:{POSTS:"文章",PAGES:"页面",CATEGORIES:"分类",TAGS:"标签",UNTITLED:"(无标题)",},CONTENT_URL:"/content.json",};window.INSIGHT_CONFIG=INSIGHT_CONFIG})(window);</script><script src="/js/insight.js" defer></script><div class="searchbox ins-search"><div class="searchbox-container ins-search-container"><div class="searchbox-input-wrapper"><input class="searchbox-input ins-search-input" type="text" placeholder="想要查找什么..."><span class="searchbox-close"><a class="fa fa-times-circle" onclick="closeWindow();"></a></span></div><div class="searchbox-result-wrapper ins-section-wrapper"><div class="ins-section-container"><p>Seraching...</p></div></div></div></div></body></html>
