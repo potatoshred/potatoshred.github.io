@@ -21,7 +21,7 @@
 <p>开发者发现，指令地址（PC）和行号通常是连续且单调递增的。如果不记录绝对值，只记录差值（$\Delta$），不就可以减小数值大小。但仍未解决重复信息的问题，例如数值不变时，仍然需要存储多个相同的差值0。</p>
 <p>自然想到，既然指令地址（PC）和行号通常是连续且单调递增的，那么只在数值变化时，才记录差值（$\Delta$）不就可以了吗？</p>
 <p>为了解决这个问题，.debug_line节使用了一种压缩编码方式，将这些信息压缩存储。</p>
-<p><img src="/2024/20240324%E6%90%AD%E5%BB%BA%E8%BF%87%E7%A8%8B/PKE%E2%80%94lab1_c2/1766379845939.png" alt="1766379845939"><br>（<a target="_blank" rel="noopener" href="https://blog.gistre.epita.fr/posts/maxim.payeur-2024-09-24-the-dwarf-debugging-information-format/">The Gistre Blog</a>）</p>
+<p><img src="/2025/20251222RISCVPKE%E2%80%94lab1_c2/1766379845939.png" alt="1766379845939"><br>（<a target="_blank" rel="noopener" href="https://blog.gistre.epita.fr/posts/maxim.payeur-2024-09-24-the-dwarf-debugging-information-format/">The Gistre Blog</a>）</p>
 <h2 id="DWARF-状态机的核心压缩机制"><a href="#DWARF-状态机的核心压缩机制" class="headerlink" title="DWARF 状态机的核心压缩机制"></a>DWARF 状态机的核心压缩机制</h2><p>状态机内部维护一组寄存器，最关键的是：<code>(address, file, line, column)</code>。</p>
 <p>.debug_line 节中存储的是一系列字节码。调试器通过“运行”这些字节码来还原数据：</p>
 <h3 id="标准指令"><a href="#标准指令" class="headerlink" title="标准指令"></a>标准指令</h3><table>
